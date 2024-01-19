@@ -10,7 +10,9 @@ public class ChessMove {
 
     public ChessMove(ChessPosition startPosition, ChessPosition endPosition,
                      ChessPiece.PieceType promotionPiece) {
-    }
+                        //TODO: create the neccesary methods
+                        
+                    }
 
     /**
      * @return ChessPosition of starting location
