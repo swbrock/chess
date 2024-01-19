@@ -3,6 +3,9 @@ package chess;
 import java.util.ArrayList;
 import java.util.Collection;
 
+import chess.PieceMovesCalculator.KingMovesCalculator;
+import chess.PieceMovesCalculator.PieceMovesCalculator;
+
 /**
  * Represents a single chess piece
  * <p>
@@ -11,7 +14,12 @@ import java.util.Collection;
  */
 public class ChessPiece {
 
+    private ChessGame.TeamColor pieceColor;
+    private PieceType type;
+
     public ChessPiece(ChessGame.TeamColor pieceColor, ChessPiece.PieceType type) {
+        this.pieceColor = pieceColor;
+        this.type = type;
     }
 
     /**
@@ -30,14 +38,14 @@ public class ChessPiece {
      * @return Which team this chess piece belongs to
      */
     public ChessGame.TeamColor getTeamColor() {
-        throw new RuntimeException("Not implemented");
+        return pieceColor;
     }
 
     /**
      * @return which type of chess piece this piece is
      */
     public PieceType getPieceType() {
-        throw new RuntimeException("Not implemented");
+        return type;
     }
 
     /**
@@ -48,6 +56,10 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        return new ArrayList<>();
+        Collection<ChessMove> moves = new ArrayList<>();
+        PieceMovesCalculator calculator = PieceMovesCalculatorFactory.getCalculator(this.type, board, myPosition);
+        calculator.calculateMoves(this);
+        moves.addAll(calculator.getMoves());
+        return moves;
     }
 }

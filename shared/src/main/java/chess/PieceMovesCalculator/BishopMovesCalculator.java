@@ -25,4 +25,10 @@ public class BishopMovesCalculator implements PieceMovesCalculator {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'calculateMoves'");
     }
+
+    @Override
+    public void calculatePossibleMoves(ChessPosition currentPosition, int[] rowOffsets, int[] colOffsets) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'calculatePossibleMoves'");
+    }
 }
