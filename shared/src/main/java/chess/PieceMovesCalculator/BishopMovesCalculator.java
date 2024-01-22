@@ -13,6 +13,7 @@ public class BishopMovesCalculator implements PieceMovesCalculator {
     private ChessPosition position;
     private Collection<ChessMove> possibleMoves = new HashSet<ChessMove>();
 
+
     public BishopMovesCalculator(ChessBoard board, ChessPosition position) {
         this.board = board;
         this.position = position;
@@ -30,18 +31,23 @@ public class BishopMovesCalculator implements PieceMovesCalculator {
     public Collection<ChessMove> calculatePossibleMoves(ChessPosition currentPosition, int[] rowOffsets, int[] colOffsets) {
         int currentRow = currentPosition.getRow();
         int currentCol = currentPosition.getColumn();
+        var currentPiece = board.getPiece(currentPosition);
+        var teamColor = currentPiece.getTeamColor();
         for (int i = 0; i < rowOffsets.length; i++) {
             int rowOffset = rowOffsets[i];
             int colOffset = colOffsets[i];
             int row = currentRow + rowOffset;
             int col = currentCol + colOffset;
-            while (row >= 0 && row < 8 && col >= 0 && col < 8) {
+            if (row > 8 || col > 8 || row < 1 || col < 1) {
+                continue;
+            }
+            while (row >= 1 && row < 9 && col >= 1 && col < 9) {
                 ChessPosition position = new ChessPosition(row, col);
                 ChessPiece piece = board.getPiece(position);
                 if (piece == null) {
                     possibleMoves.add(new ChessMove(currentPosition, position, null));
                 } else {
-                    if (piece.getTeamColor() != currentPosition.getTeamColor()) {
+                    if (piece.getTeamColor() != teamColor) {
                         possibleMoves.add(new ChessMove(currentPosition, position, null));
                         //piece is captured
                     }
@@ -51,6 +57,8 @@ public class BishopMovesCalculator implements PieceMovesCalculator {
                 col += colOffset;
             }
         }
+        //
+
         return possibleMoves;
     }
 }

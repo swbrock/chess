@@ -21,13 +21,7 @@ public class RookMovesCalculator implements PieceMovesCalculator {
     }
 
     @Override
-    public void calculateMoves(ChessPiece piece) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'calculateMoves'");
-    }
-
-    @Override
-    public void calculatePossibleMoves(ChessPosition currentPosition, int[] rowOffsets, int[] colOffsets) {
+    public Collection<ChessMove> calculatePossibleMoves(ChessPosition currentPosition, int[] rowOffsets, int[] colOffsets) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'calculatePossibleMoves'");
     }

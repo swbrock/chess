@@ -1,6 +1,7 @@
 package chess;
 
 import java.util.Collection;
+import java.util.Objects;
 
 import chess.PieceMovesCalculator.PieceMovesCalculator;
 
@@ -57,5 +58,17 @@ public class ChessPiece {
         PieceMovesCalculator calculator = PieceMovesCalculatorFactory.getCalculator(this.type, board, myPosition);
         Collection<ChessMove> moves = calculator.getMoves();
         return moves;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ChessPiece that)) return false;
+        return pieceColor == that.pieceColor && type == that.type;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(pieceColor, type);
     }
 }

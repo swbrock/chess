@@ -22,7 +22,7 @@ public class QueenMovesCalculator implements PieceMovesCalculator {
     }
 
     @Override
-    public void calculatePossibleMoves(ChessPosition currentPosition, int[] rowOffsets, int[] colOffsets) {
+    public Collection<ChessMove> calculatePossibleMoves(ChessPosition currentPosition, int[] rowOffsets, int[] colOffsets) {
         // TODO Auto-generated method stub
         throw new UnsupportedOperationException("Unimplemented method 'calculatePossibleMoves'");
     }

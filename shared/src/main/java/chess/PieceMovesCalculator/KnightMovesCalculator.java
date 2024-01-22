@@ -28,20 +28,23 @@ public class KnightMovesCalculator implements PieceMovesCalculator {
     public Collection<ChessMove> calculatePossibleMoves(ChessPosition currentPosition, int[] rowOffsets, int[] colOffsets) {
         int currentRow = currentPosition.getRow();
         int currentCol = currentPosition.getColumn();
+        var teamColor = board.getPiece(currentPosition).getTeamColor();
         for (int i = 0; i < rowOffsets.length; i++) {
             int rowOffset = rowOffsets[i];
             int colOffset = colOffsets[i];
             int row = currentRow + rowOffset;
             int col = currentCol + colOffset;
+            if (row > 8 || col > 8 || row < 1 || col < 1) {
+                continue;
+            }
             ChessPosition position = new ChessPosition(row, col);
             ChessPiece piece = board.getPiece(position);
             if (piece == null) {
                 possibleMoves.add(new ChessMove(currentPosition, position, null));
             } else {
-                if (piece.getTeamColor() != currentPosition.getTeamColor()) {
+                if (piece.getTeamColor() != teamColor) {
                     possibleMoves.add(new ChessMove(currentPosition, position, null));
                 }
-                break;
             }
         }
         return possibleMoves;

@@ -26,53 +26,29 @@ public class KingMovesCalculator implements PieceMovesCalculator {
         return possibleMoves;
     }
 
-    //create function to check if king is in check
-    public boolean isInCheck(ChessPosition currentPosition) {
-    //     //check to see if any of the opponent's pieces can move to the king's position
-    //     //if so, return true
-    //     //else, return false
-    //     if (currentPosition.getTeamColor() == ChessGame.TeamColor.BLACK) {
-    //     for (ChessPiece piece : board.getBlackPieces()) {
-    //         if (piece.getMoves().contains(currentPosition)) {
-    //             return true;
-    //         }
-    //     } else {
-    //         for (ChessPiece piece : board.getWhitePieces()) {
-    //             if (piece.getMoves().contains(currentPosition)) {
-    //                 return true;
-    //             }
-    //         }
-    //     }
-    //     return false;
-    // }
-    return false;
-    }
-
     @Override
     public Collection<ChessMove> calculatePossibleMoves(ChessPosition currentPosition, int[] rowOffsets, int[] colOffsets) {
         int currentRow = currentPosition.getRow();
         int currentCol = currentPosition.getColumn();
+        var currentPiece = board.getPiece(currentPosition);
+        var teamColor = currentPiece.getTeamColor();
+
         for(int i = 0; i < rowOffsets.length; i++) {
             int rowOffset = rowOffsets[i];
             int colOffset = colOffsets[i];
             int row = currentRow + rowOffset;
             int col = currentCol + colOffset;
-            while (row >= 0 && row < 8 && col >= 0 && col < 8) {
-                ChessPosition position = new ChessPosition(row, col);
-                ChessPiece piece = board.getPiece(position);
-                if (piece == null) {
-                    if (isInCheck(position)) {
-                        break;
-                    }
+            if (row > 8 || col > 8 || row < 1 || col < 1) {
+                continue;
+            }
+            ChessPosition position = new ChessPosition(row, col);
+            ChessPiece piece = board.getPiece(position);
+            if (piece == null) {
+                possibleMoves.add(new ChessMove(currentPosition, position, null));
+            } else {
+                if (piece.getTeamColor() != teamColor) {
                     possibleMoves.add(new ChessMove(currentPosition, position, null));
-                } else {
-                    if (piece.getTeamColor() != currentPosition.getTeamColor()) {
-                        possibleMoves.add(new ChessMove(currentPosition, position, null));
-                    }
-                    break;
                 }
-                row += rowOffset;
-                col += colOffset;
             }
         }
         return possibleMoves;
