@@ -5,10 +5,12 @@ import chess.ChessMove;
 import chess.ChessPiece;
 import chess.ChessPosition;
 import java.util.Collection;
+import java.util.HashSet;
 
 public class QueenMovesCalculator implements PieceMovesCalculator {
     private ChessBoard board;
     private ChessPosition position;
+    private Collection<ChessMove> possibleMoves = new HashSet<ChessMove>();
 
     public QueenMovesCalculator(ChessBoard board, ChessPosition position) {
         this.board = board;
@@ -16,13 +18,7 @@ public class QueenMovesCalculator implements PieceMovesCalculator {
     }
 
     public Collection<ChessMove> getMoves() {
-        throw new RuntimeException("Not implemented");
-    }
-
-    @Override
-    public void calculateMoves(ChessPiece piece) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'calculateMoves'");
+        return null;
     }
 
     @Override

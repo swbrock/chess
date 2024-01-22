@@ -5,10 +5,12 @@ import chess.ChessMove;
 import chess.ChessPiece;
 import chess.ChessPosition;
 import java.util.Collection;
+import java.util.HashSet;
 
 public class KnightMovesCalculator implements PieceMovesCalculator {
     private ChessBoard board;
     private ChessPosition position;
+    private Collection<ChessMove> possibleMoves = new HashSet<ChessMove>();
 
     public KnightMovesCalculator(ChessBoard board, ChessPosition position) {
         this.board = board;
@@ -16,18 +18,32 @@ public class KnightMovesCalculator implements PieceMovesCalculator {
     }
 
     public Collection<ChessMove> getMoves() {
-        throw new RuntimeException("Not implemented");
+        int[] rowOffsets = {1, 2, 1, 2, -1, -2, -1, -2};
+        int[] colOffsets = {2, 1, -2, -1, 2, 1, -2, -1};
+        possibleMoves = calculatePossibleMoves(position, rowOffsets, colOffsets);
+        return possibleMoves;
     }
 
     @Override
-    public void calculateMoves(ChessPiece piece) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'calculateMoves'");
-    }
-
-    @Override
-    public void calculatePossibleMoves(ChessPosition currentPosition, int[] rowOffsets, int[] colOffsets) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'calculatePossibleMoves'");
+    public Collection<ChessMove> calculatePossibleMoves(ChessPosition currentPosition, int[] rowOffsets, int[] colOffsets) {
+        int currentRow = currentPosition.getRow();
+        int currentCol = currentPosition.getColumn();
+        for (int i = 0; i < rowOffsets.length; i++) {
+            int rowOffset = rowOffsets[i];
+            int colOffset = colOffsets[i];
+            int row = currentRow + rowOffset;
+            int col = currentCol + colOffset;
+            ChessPosition position = new ChessPosition(row, col);
+            ChessPiece piece = board.getPiece(position);
+            if (piece == null) {
+                possibleMoves.add(new ChessMove(currentPosition, position, null));
+            } else {
+                if (piece.getTeamColor() != currentPosition.getTeamColor()) {
+                    possibleMoves.add(new ChessMove(currentPosition, position, null));
+                }
+                break;
+            }
+        }
+        return possibleMoves;
     }
 }
