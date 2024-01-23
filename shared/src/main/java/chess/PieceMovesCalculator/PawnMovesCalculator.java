@@ -55,7 +55,15 @@ public class PawnMovesCalculator implements PieceMovesCalculator {
             ChessPosition position = new ChessPosition(row, col);
             ChessPiece piece = board.getPiece(position);
             if (piece == null) {
-                possibleMoves.add(new ChessMove(currentPosition, position, null));
+                if (row == 8 || row == 1) {
+                    possibleMoves.add(new ChessMove(currentPosition, position, ChessPiece.PieceType.QUEEN));
+                    possibleMoves.add(new ChessMove(currentPosition, position, ChessPiece.PieceType.BISHOP));
+                    possibleMoves.add(new ChessMove(currentPosition, position, ChessPiece.PieceType.ROOK));
+                    possibleMoves.add(new ChessMove(currentPosition, position, ChessPiece.PieceType.KNIGHT));
+                    break;
+                } else {
+                    possibleMoves.add(new ChessMove(currentPosition, position, null));
+                }
             } else {
                 break;
             }
@@ -69,7 +77,15 @@ public class PawnMovesCalculator implements PieceMovesCalculator {
             ChessPiece piece = board.getPiece(position);
             if (piece != null) {
                 if (piece.getTeamColor() != teamColor) {
-                    possibleMoves.add(new ChessMove(currentPosition, position, null));
+                    if (row == 8 || row == 1) {
+                        possibleMoves.add(new ChessMove(currentPosition, position, ChessPiece.PieceType.QUEEN));
+                        possibleMoves.add(new ChessMove(currentPosition, position, ChessPiece.PieceType.BISHOP));
+                        possibleMoves.add(new ChessMove(currentPosition, position, ChessPiece.PieceType.ROOK));
+                        possibleMoves.add(new ChessMove(currentPosition, position, ChessPiece.PieceType.KNIGHT));
+                        break;
+                    } else {
+                        possibleMoves.add(new ChessMove(currentPosition, position, null));
+                    }
                 }
             }
         }

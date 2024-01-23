@@ -57,8 +57,6 @@ public class BishopMovesCalculator implements PieceMovesCalculator {
                 col += colOffset;
             }
         }
-        //
-
         return possibleMoves;
     }
 }
