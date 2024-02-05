@@ -25,6 +25,30 @@ public class PawnMovesCalculator implements PieceMovesCalculator {
         return possibleMoves;
     }
 
+    //add a method to see if a pawn can use the en passant move
+    public boolean canEnPassant(ChessPosition currentPosition, int[] rowOffsets, int[] colOffsets) {
+        int currentRow = currentPosition.getRow();
+        int currentCol = currentPosition.getColumn();
+        var teamColor = board.getPiece(position).getTeamColor();
+        if (teamColor == ChessGame.TeamColor.BLACK) {
+            rowOffsets[0] = -1;
+        }
+        for (int i = 0; i < rowOffsets.length; i++) {
+            int rowOffset = rowOffsets[i];
+            int colOffset = colOffsets[i];
+            int row = currentRow + rowOffset;
+            int col = currentCol + colOffset;
+            ChessPosition position = new ChessPosition(row, col);
+            ChessPiece piece = board.getPiece(position);
+            if (piece != null) {
+                if (piece.getTeamColor() != teamColor) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     @Override
     public Collection<ChessMove> calculatePossibleMoves(ChessPosition currentPosition, int[] rowOffsets, int[] colOffsets) {
         int[] rowOffsets2 = { 1, 1};
@@ -74,6 +98,9 @@ public class PawnMovesCalculator implements PieceMovesCalculator {
             int row = currentRow + rowOffset;
             int col = currentCol + colOffset;
             ChessPosition position = new ChessPosition(row, col);
+            if (col > 8 || col < 0 || row > 8 || row < 0) {
+                continue;
+            }
             ChessPiece piece = board.getPiece(position);
             if (piece != null) {
                 if (piece.getTeamColor() != teamColor) {
@@ -86,6 +113,21 @@ public class PawnMovesCalculator implements PieceMovesCalculator {
                     } else {
                         possibleMoves.add(new ChessMove(currentPosition, position, null));
                     }
+                }
+            }
+        }
+        //check for en passant
+        if (canEnPassant(currentPosition, rowOffsets2, colOffsets2)) {
+            for (int i = 0; i < rowOffsets2.length; i++) {
+                int rowOffset = rowOffsets2[i];
+                int colOffset = colOffsets2[i];
+                int row = currentRow + rowOffset;
+                int col = currentCol + colOffset;
+                ChessPosition position = new ChessPosition(row, col);
+                ChessPiece piece = board.getPiece(position);
+                if (piece == null) {
+                    ChessPosition enPassantPosition = new ChessPosition(row - rowOffset, col);
+                    possibleMoves.add(new ChessMove(currentPosition, enPassantPosition, null));
                 }
             }
         }

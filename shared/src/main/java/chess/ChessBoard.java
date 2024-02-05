@@ -93,6 +93,21 @@ public class ChessBoard {
 
     @Override
     public String toString() {
-        return "ChessBoard = " + Arrays.deepToString(squares);
+        StringBuilder returnString = new StringBuilder();
+        for (int row = 8; row > 0; row--){
+            for (int col = 1; col < 9; col++){
+                ChessPosition pos = new ChessPosition(row, col);
+                ChessPiece piece = getPiece(pos);
+                returnString.append("|");
+                if (piece == null) {
+                    returnString.append(" ");
+                } else {
+                    returnString.append(piece);
+                }
+            }
+            returnString.append("|");
+            returnString.append("\n");
+        }
+        return returnString.toString();
     }
 }
