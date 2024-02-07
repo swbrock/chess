@@ -19,8 +19,8 @@ public class PawnMovesCalculator implements PieceMovesCalculator {
     }
 
     public Collection<ChessMove> getMoves() {
-        int[] rowOffsets = { 1, 0};
-        int[] colOffsets = { 0, 0};
+        int[] rowOffsets = {1, 0};
+        int[] colOffsets = {0, 0};
         possibleMoves = calculatePossibleMoves(position, rowOffsets, colOffsets);
         return possibleMoves;
     }
@@ -51,8 +51,8 @@ public class PawnMovesCalculator implements PieceMovesCalculator {
 
     @Override
     public Collection<ChessMove> calculatePossibleMoves(ChessPosition currentPosition, int[] rowOffsets, int[] colOffsets) {
-        int[] rowOffsets2 = { 1, 1};
-        int[] colOffsets2 = { 1, -1};
+        int[] rowOffsets2 = {1, 1};
+        int[] colOffsets2 = {1, -1};
         var teamColor = board.getPiece(position).getTeamColor();
         if (teamColor == ChessGame.TeamColor.BLACK) {
             rowOffsets[0] = -1;
@@ -113,21 +113,6 @@ public class PawnMovesCalculator implements PieceMovesCalculator {
                     } else {
                         possibleMoves.add(new ChessMove(currentPosition, position, null));
                     }
-                }
-            }
-        }
-        //check for en passant
-        if (canEnPassant(currentPosition, rowOffsets2, colOffsets2)) {
-            for (int i = 0; i < rowOffsets2.length; i++) {
-                int rowOffset = rowOffsets2[i];
-                int colOffset = colOffsets2[i];
-                int row = currentRow + rowOffset;
-                int col = currentCol + colOffset;
-                ChessPosition position = new ChessPosition(row, col);
-                ChessPiece piece = board.getPiece(position);
-                if (piece == null) {
-                    ChessPosition enPassantPosition = new ChessPosition(row - rowOffset, col);
-                    possibleMoves.add(new ChessMove(currentPosition, enPassantPosition, null));
                 }
             }
         }

@@ -133,7 +133,6 @@ public class ChessGame {
 
     //this method will check the possible moves of a piece to see if the move puts their king in check
     public void checkForKingInCheck(Collection<ChessMove> moves, ChessPiece piece, ChessPosition startPosition) {
-        //cant use a for each loop here because we are modifying the collection
         var length = moves.size();
         var iterator = moves.iterator();
         for (int i = 0; i < length; i++) {
