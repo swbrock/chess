@@ -1,46 +1,41 @@
 package dataAccess;
 
 import chess.ChessGame;
+import model.GameData;
 
 import java.util.HashMap;
 import java.util.List;
 
 public class MemoryGameDAO implements GameDAO {
+    private int nextId = 1;
+    private int authId = 1;
+    private int gameId = 1;
 
-    HashMap<Integer, ChessGame> games = new HashMap<>();
-
-    public void createGame(int gameID, ChessGame game) throws DataAccessException {
-        try {
-            games.put(gameID, game);
-        } catch (Exception e) {
-            throw new DataAccessException("Game could not be created");
-        }
-
+    final private HashMap<Integer, GameData> games = new HashMap<>();
+    @Override
+    public GameData createGame(String gameName) throws DataAccessException {
+        ChessGame newGame = new ChessGame();
+        GameData game = new GameData(nextId++, "", "", gameName, newGame);
+        games.put(gameId, game);
+        gameId++;
+        return game;
     }
 
-    public ChessGame getGame(int gameID) throws DataAccessException {
+    @Override
+    public GameData getGame(int gameID) throws DataAccessException {
         try {
             return games.get(gameID);
         } catch (Exception e) {
             throw new DataAccessException("Game not found");
         }
     }
+    @Override
 
     public List<ChessGame> listGames() throws DataAccessException {
-        try {
-            return (List<ChessGame>) games.values();
-        } catch (Exception e) {
-            throw new DataAccessException("Games not found");
-        }
+        return null;
     }
 
-    public void updateGame(int gameID, ChessGame game) throws DataAccessException {
-        try {
-            games.replace(gameID, game);
-        } catch (Exception e) {
-            throw new DataAccessException("Game could not be updated");
-        }
-    }
+    @Override
 
     public void clearGames() throws DataAccessException {
         try {

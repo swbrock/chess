@@ -1,13 +1,15 @@
 package dataAccess;
 
+import model.AuthData;
+
 public interface AuthDAO {
-            void createAuth(String username, String password) throws DataAccessException;
+            AuthData insertToken(AuthData auth) throws DataAccessException;
         
-            String getAuth(String username) throws DataAccessException;
+            AuthData checkToken(AuthData auth) throws DataAccessException;
         
-            void deleteAuth(String username) throws DataAccessException;
+            AuthData removeUser(AuthData auth) throws DataAccessException;
         
-            void updateAuth(String username, String password) throws DataAccessException;
-        
+
             void clearAuths() throws DataAccessException;
+            int numberOfAuths();
 }
