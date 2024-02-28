@@ -1,31 +1,36 @@
 package dataAccess;
 
 import java.util.HashMap;
+import java.util.UUID;
 
 import model.AuthData;
 
 public class MemoryAuthDAO implements AuthDAO {
 
-    HashMap<String, String> auths = new HashMap<>();
+    static HashMap<String, AuthData> auths = new HashMap<>();
 
     @Override
-    public AuthData checkToken(AuthData auth) throws DataAccessException {
-//        String password = auths.get(username);
-//        if (password == null) {
-//            throw new DataAccessException("User not found");
-//        }
-//        return new AuthData(username, password);
-        return null;
+    public Boolean getAuth(String authToken) throws DataAccessException {
+        return auths.get(authToken) != null;
     }
 
     @Override
-    public AuthData insertToken(AuthData auth) throws DataAccessException {
-        return null;
+    public AuthData createAuth(String username) throws DataAccessException {
+        String authToken = UUID.randomUUID().toString();
+        AuthData auth = new AuthData(authToken, username);
+        auths.put(authToken, auth);
+        return auth;
     }
 
+
     @Override
-    public AuthData removeUser(AuthData auth) throws DataAccessException {
-        return null;
+    public void deleteAuth(String authToken) throws DataAccessException {
+        try {
+            AuthData auth = auths.get(authToken);
+            auths.remove(auth.authToken(), auth);
+        } catch (Exception e) {
+            throw new DataAccessException("User could not be deleted");
+        }
     }
 
     @Override
@@ -40,11 +45,29 @@ public class MemoryAuthDAO implements AuthDAO {
 
     @Override
     public int numberOfAuths() {
-        return 0;
+        return auths.size();
     }
 
     //helper method in my MemoryAuthDAO class that returns a boolean for if the auth database contains a given authToken. Then you can easily check if an authToken is valid or not
     public boolean containsAuth(String authToken) {
         return auths.containsKey(authToken);
     }
+
+    public AuthData findAuthDataByUsername(String username) {
+        for (AuthData authData : auths.values()) {
+            if (authData.username().equals(username)) {
+                return authData;
+            }
+        }
+        return null; // Or throw an exception indicating authToken not found
+    }
+    public AuthData findAuthDataByAuthToken(String authToken) {
+        for (AuthData authData : auths.values()) {
+            if (authData.authToken().equals(authToken)) {
+                return authData;
+            }
+        }
+        return null; // Or throw an exception indicating authToken not found
+    }
+
 }

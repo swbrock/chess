@@ -7,17 +7,16 @@ import model.GameData;
 import model.UserData;
 
 public class MemoryUserDAO implements UserDAO {
-    private int nextId = 1;
-    private int authId = 1;
-    private int userId = 1;
 
 
-    HashMap<Integer, UserData> users = new HashMap<>();
+    static HashMap<String, UserData> users = new HashMap<>();
 
     @Override
     public UserData createUser(UserData newUser) throws DataAccessException {
-        users.put(userId, newUser);
-        userId++;
+        if (users.containsKey(newUser.username())) {
+            throw new DataAccessException("User already exists");
+        }
+        users.put(newUser.username(), newUser);
         return newUser;
     }
 
@@ -35,15 +34,10 @@ public class MemoryUserDAO implements UserDAO {
     public void deleteUser(String username) throws DataAccessException {
         try {
             UserData user = users.get(username);
-            users.remove(username, user);
+            users.remove(user.username(), user);
         } catch (Exception e) {
             throw new DataAccessException("User could not be deleted");
         }
-    }
-
-    @Override
-    public void updateUser(UserData u) throws DataAccessException {
-
     }
 
     public void clearUsers() throws DataAccessException {
@@ -53,5 +47,4 @@ public class MemoryUserDAO implements UserDAO {
             throw new DataAccessException("Users could not be cleared");
         }
     }
-
 }

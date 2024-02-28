@@ -3,22 +3,23 @@ package dataAccess;
 import chess.ChessGame;
 import model.GameData;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
 public class MemoryGameDAO implements GameDAO {
-    private int nextId = 1;
-    private int authId = 1;
-    private int gameId = 1;
+    static int nextId = 1;
+    static int gameId = 1;
 
-    final private HashMap<Integer, GameData> games = new HashMap<>();
+    static HashMap<Integer, GameData> games = new HashMap<>();
     @Override
-    public GameData createGame(String gameName) throws DataAccessException {
+    public int createGame(String gameName) throws DataAccessException {
         ChessGame newGame = new ChessGame();
-        GameData game = new GameData(nextId++, "", "", gameName, newGame);
+        newGame.getBoard().resetBoard();
+        GameData game = new GameData(nextId++, null, null, gameName, newGame);
         games.put(gameId, game);
         gameId++;
-        return game;
+        return gameId - 1;
     }
 
     @Override
@@ -26,14 +27,20 @@ public class MemoryGameDAO implements GameDAO {
         try {
             return games.get(gameID);
         } catch (Exception e) {
-            throw new DataAccessException("Game not found");
+            throw new DataAccessException("Error: bad request");
         }
     }
     @Override
 
-    public List<ChessGame> listGames() throws DataAccessException {
-        return null;
+    public List<GameData> listGames() throws DataAccessException {
+        try {
+            // Convert the values of the map to a list
+            return new ArrayList<>(games.values());
+        } catch (Exception e) {
+            throw new DataAccessException("Games could not be listed"); // Include the original exception for better error handling
+        }
     }
+
 
     @Override
 
@@ -42,6 +49,15 @@ public class MemoryGameDAO implements GameDAO {
             games.clear();
         } catch (Exception e) {
             throw new DataAccessException("Games could not be cleared");
+        }
+    }
+
+    @Override
+    public void updateGame(int id, GameData game) throws DataAccessException {
+        try {
+            games.replace(id, game);
+        } catch (Exception e) {
+            throw new DataAccessException("Game could not be updated");
         }
     }
 }
