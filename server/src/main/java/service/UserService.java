@@ -5,10 +5,14 @@ import model.AuthData;
 import model.UserData;
 
 public class UserService {
-    final UserDAO userDAO;
+    public static UserDAO userDAO;
 
     public UserService() {
-        userDAO = new MemoryUserDAO();
+        try {
+            userDAO = new SQLUserDAO();
+        } catch (Exception ignored) {
+
+        }
     }
 
     public void clearUsers() throws DataAccessException {

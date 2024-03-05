@@ -11,7 +11,7 @@ public interface AuthDAO {
         
             void deleteAuth(String authToken) throws DataAccessException;
             void clearAuths() throws DataAccessException;
-            int numberOfAuths();
+            int numberOfAuths() throws DataAccessException;
             AuthData findAuthDataByAuthToken(String authToken) throws DataAccessException;
             AuthData findAuthDataByUsername(String username) throws DataAccessException;
 

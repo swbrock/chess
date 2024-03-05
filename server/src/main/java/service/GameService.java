@@ -2,17 +2,20 @@ package service;
 
 import java.util.List;
 
-import chess.ChessGame;
 import dataAccess.DataAccessException;
 import dataAccess.GameDAO;
-import dataAccess.MemoryGameDAO;
+import dataAccess.SQLGameDAO;
 import model.GameData;
 
 public class GameService {
-    private final GameDAO gameDAO;
+    private static GameDAO gameDAO;
 
     public GameService() {
-        gameDAO = new MemoryGameDAO();
+        try {
+            gameDAO = new SQLGameDAO();
+        } catch (Exception ignored) {
+
+        }
     }
 
     public void clearGames() throws DataAccessException {

@@ -2,16 +2,20 @@ package service;
 
 import dataAccess.AuthDAO;
 import dataAccess.DataAccessException;
-import dataAccess.MemoryAuthDAO;
+import dataAccess.SQLAuthDAO;
 import model.AuthData;
 
 import javax.xml.crypto.Data;
 
 public class RegistrationService {
-    private final AuthDAO authDAO;
+    private static AuthDAO authDAO;
 
     public RegistrationService() {
-        authDAO = new MemoryAuthDAO();
+        try {
+            authDAO = new SQLAuthDAO();
+        } catch (Exception ignored) {
+
+        }
     }
 
     public void clearAuth() throws DataAccessException {
