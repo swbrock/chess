@@ -34,7 +34,7 @@ public class UserServiceTest {
         // Positive test case
         UserData user = new UserData("dfd", "dfsdf", "Dfsdf");
         userService.createUser(user);
-        UserData test = userService.userDAO.getUser("dfd");
+        UserData test = userService.userDAO.getUser("dfd", "dfsdf");
         assertNotNull(test);
 
     }

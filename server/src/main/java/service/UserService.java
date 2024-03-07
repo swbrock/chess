@@ -23,14 +23,14 @@ public class UserService {
     }
     public UserData loginUser(UserData user) throws DataAccessException {
         try {
-            UserData checkUser = userDAO.getUser(user.username());
+            UserData checkUser = userDAO.getUser(user.username(), user.password());
             if (checkUser == null) {
                 return null;
             }
             if (!checkUser.password().equals(user.password())) {
                 return null;
             }
-            return userDAO.getUser(user.username());
+            return userDAO.getUser(user.username(), user.password());
         } catch (DataAccessException e) {
             return null;
         }

@@ -22,7 +22,7 @@ public class MemoryUserDAO implements UserDAO {
 
 
     @Override
-    public UserData getUser(String username) throws DataAccessException {
+    public UserData getUser(String username, String password) throws DataAccessException {
         UserData user = users.get(username);
         if (user == null) {
             throw new DataAccessException("User not found");

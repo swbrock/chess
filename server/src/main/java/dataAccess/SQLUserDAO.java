@@ -1,6 +1,7 @@
 package dataAccess;
 
 import model.UserData;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -13,6 +14,8 @@ public class SQLUserDAO implements UserDAO {
     private static final String SELECT_USER_SQL = "SELECT * FROM UserData WHERE username = ?";
     private static final String DELETE_USER_SQL = "DELETE FROM UserData WHERE username = ?";
     private static final String DELETE_ALL_USERS_SQL = "TRUNCATE TABLE UserData";
+    private static final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
 
     public SQLUserDAO() throws DataAccessException {
         try {
@@ -47,11 +50,12 @@ public class SQLUserDAO implements UserDAO {
                 }
             }
 
-            // If no user with the same username exists, proceed with user creation
+            String hashedPassword = passwordEncoder.encode(user.password());
+
             String insertUserSQL = "INSERT INTO UserData (username, password, email) VALUES (?, ?, ?)";
             try (PreparedStatement insertStatement = connection.prepareStatement(insertUserSQL)) {
                 insertStatement.setString(1, user.username());
-                insertStatement.setString(2, user.password());
+                insertStatement.setString(2, hashedPassword); // Store hashed password
                 insertStatement.setString(3, user.email());
                 int rowsInserted = insertStatement.executeUpdate();
                 if (rowsInserted > 0) {
@@ -66,15 +70,18 @@ public class SQLUserDAO implements UserDAO {
 
 
     @Override
-    public UserData getUser(String username) throws DataAccessException {
+    public UserData getUser(String username, String password) throws DataAccessException {
         try (Connection connection = DatabaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(SELECT_USER_SQL)) {
             statement.setString(1, username);
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
-                    return new UserData(resultSet.getString("username"),
-                            resultSet.getString("password"),
-                            resultSet.getString("email"));
+                    String hashedPassword = resultSet.getString("password");
+                    if (passwordEncoder.matches(password, hashedPassword)) {
+                        return new UserData(resultSet.getString("username"),
+                                password,
+                                resultSet.getString("email"));
+                    }
                 }
             }
         } catch (SQLException ex) {
