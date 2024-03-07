@@ -3,6 +3,7 @@ package dataAccessTests;
 import static org.junit.Assert.*;
 
 import model.AuthData;
+import dataAccess.AuthDAO;
 import org.junit.*;
 import dataAccess.*;
 

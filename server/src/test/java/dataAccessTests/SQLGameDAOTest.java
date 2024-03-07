@@ -4,7 +4,6 @@ import static org.junit.Assert.*;
 
 import dataAccess.GameDAO;
 import dataAccess.SQLGameDAO;
-import dataAccess.SQLUserDAO;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
