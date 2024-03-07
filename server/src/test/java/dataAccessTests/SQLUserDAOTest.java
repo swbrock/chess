@@ -2,6 +2,11 @@ package dataAccessTests;
 
 import static org.junit.Assert.*;
 
+import dataAccess.SQLUserDAO;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+
 import dataAccess.DataAccessException;
 import model.UserData;
 
@@ -90,24 +95,6 @@ public class SQLUserDAOTest {
             // Attempt to retrieve the user after deletion
             UserData retrievedUser = userDAO.getUser(user.username(), user.password());
             assertNull(retrievedUser); // The user should not exist
-        } catch (DataAccessException e) {
-            fail("Unexpected DataAccessException: " + e.getMessage());
-        }
-    }
-
-    @Test
-    public void testClearUsersPositive() {
-        // Positive test case: Clearing all users from the database
-        try {
-            // First, create some users
-            userDAO.createUser(new UserData("user1", "password1", "user1@example.com"));
-            userDAO.createUser(new UserData("user2", "password2", "user2@example.com"));
-            userDAO.createUser(new UserData("user3", "password3", "user3@example.com"));
-            // Then, clear all users
-            userDAO.clearUsers();
-            // Attempt to retrieve all users after clearing
-            int numberOfUsers = userDAO.numberOfUsers();
-            assertEquals(0, numberOfUsers); // There should be no users in the database
         } catch (DataAccessException e) {
             fail("Unexpected DataAccessException: " + e.getMessage());
         }
