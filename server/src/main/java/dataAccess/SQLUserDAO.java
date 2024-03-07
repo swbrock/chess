@@ -21,7 +21,7 @@ public class SQLUserDAO implements UserDAO {
         CREATE TABLE IF NOT EXISTS UserData (
             username VARCHAR(255) NOT NULL,
             password VARCHAR(255) NOT NULL,
-            email VARCHAR(255) NOT NULL,
+            email VARCHAR(255),
             PRIMARY KEY (username)
         );
         """
@@ -35,20 +35,35 @@ public class SQLUserDAO implements UserDAO {
 
     @Override
     public UserData createUser(UserData user) throws DataAccessException {
-        try (Connection connection = DatabaseManager.getConnection();
-             PreparedStatement statement = connection.prepareStatement(INSERT_USER_SQL)) {
-            statement.setString(1, user.username());
-            statement.setString(2, user.password());
-            statement.setString(3, user.email());
-            int rowsInserted = statement.executeUpdate();
-            if (rowsInserted > 0) {
-                return user;
+        try (Connection connection = DatabaseManager.getConnection()) {
+            // Check if a user with the same username already exists
+            String checkUserSQL = "SELECT COUNT(*) FROM UserData WHERE username = ?";
+            try (PreparedStatement checkStatement = connection.prepareStatement(checkUserSQL)) {
+                checkStatement.setString(1, user.username());
+                try (ResultSet resultSet = checkStatement.executeQuery()) {
+                    if (resultSet.next() && resultSet.getInt(1) > 0) {
+                        throw new DataAccessException("User already exists");
+                    }
+                }
+            }
+
+            // If no user with the same username exists, proceed with user creation
+            String insertUserSQL = "INSERT INTO UserData (username, password, email) VALUES (?, ?, ?)";
+            try (PreparedStatement insertStatement = connection.prepareStatement(insertUserSQL)) {
+                insertStatement.setString(1, user.username());
+                insertStatement.setString(2, user.password());
+                insertStatement.setString(3, user.email());
+                int rowsInserted = insertStatement.executeUpdate();
+                if (rowsInserted > 0) {
+                    return user;
+                }
             }
         } catch (SQLException ex) {
             throw new DataAccessException("Failed to create user");
         }
         return null;
     }
+
 
     @Override
     public UserData getUser(String username) throws DataAccessException {

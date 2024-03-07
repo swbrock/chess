@@ -3,10 +3,7 @@ package server;
 import com.google.gson.Gson;
 
 import chess.ChessGame;
-import dataAccess.AuthDAO;
-import dataAccess.DataAccessException;
-import dataAccess.MemoryAuthDAO;
-import dataAccess.MemoryGameDAO;
+import dataAccess.*;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
@@ -54,7 +51,7 @@ public class Handler {
     //clear: A method for clearing all data from the database. This is used during testing.
     public Object createGame(Request req, Response res) throws DataAccessException {
         String authToken = req.headers("Authorization");
-        Boolean isValid = new MemoryAuthDAO().getAuth(authToken);
+        Boolean isValid = new SQLAuthDAO().getAuth(authToken);
         if (!isValid) {
             res.status(401);
             ErrorResponse response = new ErrorResponse("Error: unauthorized");
@@ -143,7 +140,7 @@ public class Handler {
     public Object logoutUser(Request req, Response res) throws DataAccessException {
         try {
             String authToken = req.headers("Authorization");
-            Boolean isValid = new MemoryAuthDAO().getAuth(authToken);
+            Boolean isValid = new SQLAuthDAO().getAuth(authToken);
             if (isValid) {
                 registrationService.logoutUser(authToken);
                 res.status(200);
@@ -165,7 +162,7 @@ public class Handler {
         try {
             // Check if authToken is provided
             String authToken = req.headers("Authorization");
-            Boolean isValid = new MemoryAuthDAO().getAuth(authToken);
+            Boolean isValid = new SQLAuthDAO().getAuth(authToken);
             if (authToken == null || !isValid) {
                 res.status(401);
                 ErrorResponse response = new ErrorResponse("Error: unauthorized");
@@ -188,7 +185,7 @@ public class Handler {
         try {
             // Extract authToken from headers
             String authToken = req.headers("Authorization");
-            Boolean isValid = new MemoryAuthDAO().getAuth(authToken);
+            Boolean isValid = new SQLAuthDAO().getAuth(authToken);
 
             // Check if authToken is valid
             if (!isValid) {
@@ -196,7 +193,7 @@ public class Handler {
                 ErrorResponse response = new ErrorResponse("Error: unauthorized");
                 return new Gson().toJson(response);
             }
-            AuthData auth = new MemoryAuthDAO().findAuthDataByAuthToken(authToken);
+            AuthData auth = new SQLAuthDAO().findAuthDataByAuthToken(authToken);
 
             // Parse request body
             Map<String, Object> request = new Gson().fromJson(req.body(), Map.class);

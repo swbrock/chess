@@ -1,7 +1,10 @@
 package dataAccess;
 
+import chess.ChessGame;
+import com.google.gson.Gson;
 import model.GameData;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -15,8 +18,9 @@ public class SQLGameDAO implements GameDAO {
     private static final String SELECT_GAME_SQL = "SELECT * FROM GameData WHERE gameID = ?";
     private static final String SELECT_ALL_GAMES_SQL = "SELECT * FROM GameData";
     private static final String UPDATE_GAME_SQL = "UPDATE GameData SET whiteUsername = ?, blackUsername = ?, gameName = ?, gameData = ? WHERE gameID = ?";
-    private static final String DELETE_GAME_SQL = "DELETE FROM GameData WHERE gameID = ?";
     private static final String DELETE_ALL_GAMES_SQL = "TRUNCATE TABLE GameData";
+    private static final Gson gson = new Gson();
+
 
     public SQLGameDAO() throws DataAccessException {
         try {
@@ -24,8 +28,8 @@ public class SQLGameDAO implements GameDAO {
                     """
     CREATE TABLE IF NOT EXISTS GameData (
         gameID INT NOT NULL AUTO_INCREMENT,
-        whiteUsername VARCHAR(255) NOT NULL,
-        blackUsername VARCHAR(255) NOT NULL,
+        whiteUsername VARCHAR(255),
+        blackUsername VARCHAR(255),
         gameName VARCHAR(255) NOT NULL,
         gameData TEXT NOT NULL,
         PRIMARY KEY (gameID)
@@ -77,7 +81,11 @@ public class SQLGameDAO implements GameDAO {
             statement.setString(1, game.whiteUsername());
             statement.setString(2, game.blackUsername());
             statement.setString(3, game.gameName());
-            statement.setString(4, game.game().toString()); // Serialize ChessGame object
+
+            // Serialize ChessGame object to JSON string
+            String serializedGame = gson.toJson(game.game());
+            statement.setString(4, serializedGame);
+
             statement.setInt(5, gameID);
             statement.executeUpdate();
         } catch (SQLException ex) {
@@ -99,11 +107,14 @@ public class SQLGameDAO implements GameDAO {
     public int createGame(String gameName) throws DataAccessException {
         try (Connection connection = DatabaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(INSERT_GAME_SQL, PreparedStatement.RETURN_GENERATED_KEYS)) {
-            statement.setString(1, null); // whiteUsername
-            statement.setString(2, null); // blackUsername
+            ChessGame game = new ChessGame();
+            game.getBoard().resetBoard();
+            statement.setString(1, null);
+            statement.setString(2, null);
             statement.setString(3, gameName);
-            statement.setString(4, null); // gameData (serialize ChessGame object)
+            statement.setString(4, gson.toJson(game));
             statement.executeUpdate();
+
             try (ResultSet generatedKeys = statement.getGeneratedKeys()) {
                 if (generatedKeys.next()) {
                     return generatedKeys.getInt(1);
@@ -116,12 +127,15 @@ public class SQLGameDAO implements GameDAO {
     }
 
     private GameData extractGameData(ResultSet resultSet) throws SQLException {
-        return new GameData(
-                resultSet.getInt("gameID"),
-                resultSet.getString("whiteUsername"),
-                resultSet.getString("blackUsername"),
-                resultSet.getString("gameName"),
-                null // Deserialize ChessGame object
-        );
+        int gameID = resultSet.getInt("gameID");
+        String whiteUsername = resultSet.getString("whiteUsername");
+        String blackUsername = resultSet.getString("blackUsername");
+        String gameName = resultSet.getString("gameName");
+        String serializedGame = resultSet.getString("gameData");
+
+        // Deserialize ChessGame object
+        ChessGame game = gson.fromJson(serializedGame, ChessGame.class);
+
+        return new GameData(gameID, whiteUsername, blackUsername, gameName, game);
     }
 }

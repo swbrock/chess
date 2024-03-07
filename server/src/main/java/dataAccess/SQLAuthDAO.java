@@ -11,7 +11,7 @@ import java.util.UUID;
 public class SQLAuthDAO implements AuthDAO {
 
     private static final String INSERT_AUTH_SQL = "INSERT INTO AuthData (authToken, username) VALUES (?, ?)";
-    private static final String SELECT_AUTH_SQL = "SELECT COUNT(*) FROM AuthData WHERE authToken = ?";
+    private static final String SELECT_AUTH_SQL = "SELECT username FROM AuthData WHERE authToken = ?";
     private static final String DELETE_AUTH_SQL = "DELETE FROM AuthData WHERE authToken = ?";
     private static final String DELETE_ALL_AUTHS_SQL = "TRUNCATE TABLE AuthData";
     private static final String SELECT_ALL_AUTHS_COUNT_SQL = "SELECT COUNT(*) FROM AuthData";
@@ -37,6 +37,7 @@ public class SQLAuthDAO implements AuthDAO {
 
     @Override
     public AuthData createAuth(String username) throws DataAccessException {
+        //clearAuths(); //This shouldn't be here - i need to figure out how to delete auth when user logs out or game shuts down.
         try (Connection connection = DatabaseManager.getConnection();
              PreparedStatement statement = connection.prepareStatement(INSERT_AUTH_SQL)) {
             String authToken = UUID.randomUUID().toString();
@@ -104,7 +105,7 @@ public class SQLAuthDAO implements AuthDAO {
             statement.setString(1, authToken);
             try (ResultSet resultSet = statement.executeQuery()) {
                 if (resultSet.next()) {
-                    String username = resultSet.getString("username");
+                    String username = resultSet.getString(1);
                     return new AuthData(authToken, username);
                 }
             }

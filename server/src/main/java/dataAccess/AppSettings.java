@@ -1,6 +1,12 @@
 package dataAccess;
 
+import model.GameData;
+
 import java.sql.SQLException;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 
 public class AppSettings {
 
@@ -20,6 +26,15 @@ public class AppSettings {
             }
         } catch (SQLException ex) {
             throw new DataAccessException("Unable to configure database");
+        }
+    }
+
+
+    public static byte[] serializeGameData(GameData gameData) throws IOException {
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
+             ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+            oos.writeObject(gameData);
+            return bos.toByteArray();
         }
     }
 }
