@@ -1,4 +1,6 @@
 package client;
 
-public class State {
+public enum State {
+    SIGNEDOUT,
+    SIGNEDIN
 }
