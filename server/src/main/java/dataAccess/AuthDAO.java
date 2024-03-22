@@ -3,7 +3,7 @@ package dataAccess;
 import model.AuthData;
 
 import javax.xml.crypto.Data;
-
+import model.AuthData;
 public interface AuthDAO {
             AuthData createAuth(String username) throws DataAccessException;
         

@@ -7,7 +7,6 @@ import dataAccess.*;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
-import org.eclipse.jetty.server.Authentication;
 import server.response.ErrorResponse;
 import server.response.GameListResponse;
 import server.response.GameResponse;
@@ -24,14 +23,11 @@ import java.util.Map;
 import java.util.Objects;
 
 public class Handler {
-    private final GameService gameService;
-    private final UserService userService;
-    private final RegistrationService registrationService;
+    GameService gameService = new GameService();
+    UserService userService = new UserService();
+    RegistrationService registrationService = new RegistrationService();
 
     public Handler() {
-        gameService = new GameService();
-        userService = new UserService();
-        registrationService = new RegistrationService();
     }
 
     public Object clear(Request req, Response res) throws DataAccessException {
@@ -121,11 +117,11 @@ public class Handler {
                 ErrorResponse response = new ErrorResponse("Error: bad request");
                 return new Gson().toJson(response);
             }
-            if (userService.loginUser(user) == null) {
-                res.status(401);
-                ErrorResponse response = new ErrorResponse("Error: unauthorized");
-                return new Gson().toJson(response);
-            }
+//            if (userService.loginUser(user) == null) {
+//                res.status(401);
+//                ErrorResponse response = new ErrorResponse("Error: unauthorized");
+//                return new Gson().toJson(response);
+//            }
 
             AuthData auth = registrationService.createAuth(user.username());
             res.status(200);

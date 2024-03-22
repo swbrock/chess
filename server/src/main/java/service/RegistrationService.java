@@ -28,11 +28,4 @@ public class RegistrationService {
     public void logoutUser(String authToken) throws DataAccessException {
         authDAO.deleteAuth(authToken);
     }
-    
-
-
-
-
-
-
 }
