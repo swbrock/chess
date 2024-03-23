@@ -1,26 +1,26 @@
 package server;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+
 import com.google.gson.Gson;
 
-import chess.ChessGame;
-import dataAccess.*;
+import dataAccess.DataAccessException;
+import dataAccess.SQLAuthDAO;
 import model.AuthData;
 import model.GameData;
 import model.UserData;
 import server.response.ErrorResponse;
 import server.response.GameListResponse;
 import server.response.GameResponse;
-import service.RegistrationService;
-import service.UserService;
-import spark.Response;
 import service.GameService;
-import spark.Request;
-import spark.Service;
+import service.RegistrationService;
 
-import javax.xml.crypto.Data;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import service.UserService;
+import spark.Request;
+import spark.Response;
+
 
 public class Handler {
     GameService gameService = new GameService();
@@ -80,29 +80,18 @@ public class Handler {
     //createUser: Create a new user.
 
     public Object createUser(Request req, Response res) throws DataAccessException {
-        var user = new Gson().fromJson(req.body(), UserData.class);
-        if (user.username() == null || user.password() == null) {
-            res.status(400);
-            ErrorResponse response = new ErrorResponse("Error: bad request");
-            return new Gson().toJson(response);
-        }
-        AuthData auth = registrationService.createAuth(user.username());
         try {
-            userService.createUser(user);
-            res.status(200);
-            //AuthResponse response = new AuthResponse(auth);
-            return new Gson().toJson(auth);
-        } catch (DataAccessException e) {
-            if (e.getMessage().equals("bad request")) {
+            UserData user;
+            user = new Gson().fromJson(req.body(), UserData.class);
+            if (user.password() == null || user.username() == null) {
                 res.status(400);
                 ErrorResponse response = new ErrorResponse("Error: bad request");
                 return new Gson().toJson(response);
             }
-            if (e.getMessage().equals("User already exists")) {
-                res.status(403);
-                ErrorResponse response = new ErrorResponse("Error: already taken");
-                return new Gson().toJson(response);
-            }
+            userService.createUser(user);
+            res.status(200);
+            return "{}";
+        } catch (DataAccessException e) {
             res.status(500);
             ErrorResponse response = new ErrorResponse("Error: " + e.getMessage());
             return new Gson().toJson(response);
@@ -117,11 +106,11 @@ public class Handler {
                 ErrorResponse response = new ErrorResponse("Error: bad request");
                 return new Gson().toJson(response);
             }
-//            if (userService.loginUser(user) == null) {
-//                res.status(401);
-//                ErrorResponse response = new ErrorResponse("Error: unauthorized");
-//                return new Gson().toJson(response);
-//            }
+            if (userService.loginUser(user) == null) {
+                res.status(401);
+                ErrorResponse response = new ErrorResponse("Error: unauthorized");
+                return new Gson().toJson(response);
+            }
 
             AuthData auth = registrationService.createAuth(user.username());
             res.status(200);
@@ -214,7 +203,7 @@ public class Handler {
                     GameData newGame = new GameData(gameID, game.whiteUsername(), auth.username(), game.gameName(), game.game());
                     gameService.updateGame(gameID, newGame);
                     res.status(200);
-                    return "{}";
+                    return new Gson().toJson(newGame);
                 } else {
                     //throw error - already a black player
                     res.status(403);
@@ -226,7 +215,7 @@ public class Handler {
                     GameData newGame = new GameData(gameID, auth.username(), game.blackUsername(), game.gameName(), game.game());
                     gameService.updateGame(gameID, newGame);
                     res.status(200);
-                    return"{}";
+                    return new Gson().toJson(newGame);
                 } else {
                     res.status(403);
                     ErrorResponse response = new ErrorResponse("Error: already taken");
@@ -234,7 +223,7 @@ public class Handler {
                 }
             } else {
                 res.status(200);
-                return "{}";
+                return new Gson().toJson(game);
                 //add observer
             }
         } catch (DataAccessException e) {

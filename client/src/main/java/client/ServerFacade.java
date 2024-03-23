@@ -1,18 +1,26 @@
 package client;
 
+import chess.ChessGame;
+import client.response.GameListResponse;
+import client.response.JoinGameResponse;
+import client.response.RegisterUserResponse;
 import com.google.gson.Gson;
+import model.GameData;
 import org.glassfish.grizzly.http.util.HttpUtils;
 
 import model.UserData;
 
 import java.io.*;
 import java.net.*;
+import java.util.List;
 
 public class ServerFacade {
-    private String serverURL;
+    private final String serverURL;
+    public String authToken;
 
     public ServerFacade(String serverURL) {
-        this.serverURL = serverURL;
+        this.serverURL = "http://localhost:8080";
+        this.authToken = authToken;
     }
 
     public void register(String username, String password, String email) {
@@ -28,11 +36,37 @@ public class ServerFacade {
 
     public void signIn(String username, String password) {
         var path = "/session";
-
+        //get the user that matches the username and password
+        UserData user = new UserData(username, password, null);
+        try {
+            RegisterUserResponse res = makeRequest("POST", path, user, RegisterUserResponse.class);
+            this.authToken = res.getAuthToken();
+        } catch (Exception ex) {
+            System.out.println(ex.getMessage());
+        }
     }
 
-    public void signOut(String authToken) {
+    public List<GameData> listGames() throws Exception {
+        var path = "/game";
+        GameListResponse games = makeRequest("GET", path, null, GameListResponse.class);
+        return games.games;
+    }
 
+    public void signOut() throws Exception {
+        var path = "/session";
+        makeRequest("DELETE", path, null, null);
+        this.authToken = null;
+    }
+    public void createGame(String gameName) throws Exception {
+        var path = "/game";
+        GameData game = new GameData(1, "", "", gameName, new ChessGame());
+        makeRequest("POST", path, game, null);
+    }
+    public GameData joinGame(int gameId, String color) throws Exception {
+        var path = "/game";
+        JoinGameResponse res = new JoinGameResponse(color.toUpperCase(), gameId);
+        GameData game = makeRequest("PUT", path, res, GameData.class);
+        return game;
     }
 
     private <T> T makeRequest(String method, String path, Object request, Class<T> responseClass) throws Exception {
@@ -40,12 +74,17 @@ public class ServerFacade {
             URL url = (new URI(serverURL + path)).toURL();
             HttpURLConnection http = (HttpURLConnection) url.openConnection();
             http.setRequestMethod(method);
-            http.setDoOutput(true);
+            if (this.authToken != null) {
+                http.addRequestProperty("Authorization", this.authToken);
+            } else {
+                http.setDoOutput(true);
+            }
             if (request != null) {
                 http.setDoOutput(true);
             }
             writeBody(request, http);
             http.connect();
+            throwIfNotSuccessful(http);
             return readBody(http, responseClass);
         } catch (Exception ex) {
             throw new Exception(ex.getMessage());
