@@ -2,6 +2,7 @@ package client;
 
 import chess.ChessGame;
 import client.response.GameListResponse;
+import client.response.GameResponse;
 import client.response.JoinGameResponse;
 import client.response.RegisterUserResponse;
 import com.google.gson.Gson;
@@ -19,8 +20,7 @@ public class ServerFacade {
     public String authToken;
 
     public ServerFacade(String serverURL) {
-        this.serverURL = "http://localhost:8080";
-        this.authToken = authToken;
+        this.serverURL = serverURL;
     }
 
     public void register(String username, String password, String email) {
@@ -34,16 +34,12 @@ public class ServerFacade {
 
     }
 
-    public void signIn(String username, String password) {
+    public void signIn(String username, String password) throws Exception {
         var path = "/session";
         //get the user that matches the username and password
         UserData user = new UserData(username, password, null);
-        try {
-            RegisterUserResponse res = makeRequest("POST", path, user, RegisterUserResponse.class);
-            this.authToken = res.getAuthToken();
-        } catch (Exception ex) {
-            System.out.println(ex.getMessage());
-        }
+        RegisterUserResponse res = makeRequest("POST", path, user, RegisterUserResponse.class);
+        this.authToken = res.getAuthToken();
     }
 
     public List<GameData> listGames() throws Exception {
@@ -65,8 +61,12 @@ public class ServerFacade {
     public GameData joinGame(int gameId, String color) throws Exception {
         var path = "/game";
         JoinGameResponse res = new JoinGameResponse(color.toUpperCase(), gameId);
-        GameData game = makeRequest("PUT", path, res, GameData.class);
-        return game;
+        return makeRequest("PUT", path, res, GameData.class);
+    }
+    public GameData observeGame(int gameId) throws Exception {
+        var path = "/game";
+        GameResponse res = new GameResponse(gameId);
+        return makeRequest("PUT", path, res, GameData.class);
     }
 
     private <T> T makeRequest(String method, String path, Object request, Class<T> responseClass) throws Exception {

@@ -4,21 +4,24 @@ import java.util.List;
 import java.util.Scanner;
 
 import static java.lang.Integer.parseInt;
-import static ui.EscapeSequences.*;
-import client.Repl;
+
+import chess.ChessGame;
+import chess.ChessPiece;
 import model.GameData;
+import ui.EscapeSequences;
 
 public class ChessClient {
 
     private final String serverUrl;
     public final ServerFacade server;
-    private State state;
+    public State state;
 
     public ChessClient(String serverURL, State state) {
         this.serverUrl = serverURL;
         this.server = new ServerFacade(serverURL);
         this.state = state;
     }
+
     public void printSignedOutMenu() {
         System.out.println("1. Sign in");
         System.out.println("2. Sign up");
@@ -83,7 +86,7 @@ public class ChessClient {
         }
     }
 
-    public String evalSignedIn (String input) {
+    public String evalSignedIn(String input) {
         try {
             var tokens = input.toLowerCase().split(" ");
             var cmd = (tokens.length > 0) ? tokens[0] : "help";
@@ -110,12 +113,15 @@ public class ChessClient {
                     var id = scanner.nextLine();
                     System.out.println("Enter Color:");
                     var color = scanner.nextLine();
-                    joinGame(parseInt(id), color);
-                    yield "Joined game";
+                    GameData game = joinGame(parseInt(id), color);
+                    yield displayGame(game);
                 }
                 case "observegame", "4" -> {
-                    //observeGame();
-                    yield "Observed game";
+                    System.out.println("Enter Game Number:");
+                    Scanner scanner = new Scanner(System.in);
+                    var id = scanner.nextLine();
+                    GameData game = observeGame(parseInt(id));
+                    yield displayGame(game);
                 }
                 case "help", "6" -> {
                     System.out.println("Help: ");
@@ -128,7 +134,7 @@ public class ChessClient {
                     System.out.println("exit: Exit the program");
                     yield "Help";
                 }
-                default -> "Unknown command";
+                default -> "Unknown command, type 'help' for options";
             };
         } catch (Exception e) {
             return "Error: " + e.getMessage();
@@ -139,11 +145,13 @@ public class ChessClient {
     public String signIn(String username, String password) {
         try {
             server.signIn(username, password);
-            System.out.println("Succesfully signed in! Welcome " + username);
-        } catch (Exception e){
+            this.state = State.SIGNEDIN;
+            printSignedInMenu();
+        } catch (Exception e) {
             System.out.println("Unsuccesfull in signing in " + username + ". Error: " + e.getMessage());
+            this.state = State.SIGNEDOUT;
+            printSignedOutMenu();
         }
-        printSignedInMenu();
         return "";
     }
 
@@ -158,12 +166,13 @@ public class ChessClient {
     public void signOut() {
         try {
             server.signOut();
-            System.out.println("Succesfully signed out!");
-        } catch (Exception e){
+            this.state = State.SIGNEDOUT;
+            printSignedOutMenu();
+        } catch (Exception e) {
             System.out.println("Unsuccesfull in signing out. Error: " + e.getMessage());
+            this.state = State.SIGNEDIN;
+            printSignedInMenu();
         }
-        this.state = State.SIGNEDOUT;
-        printSignedOutMenu();
     }
 
     public void listGames() {
@@ -179,38 +188,126 @@ public class ChessClient {
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
-        
+
     }
 
     public void createGame(String gameName) throws Exception {
         server.createGame(gameName);
     }
 
-    public void joinGame(Number gameId, String color) throws Exception {
+    public GameData joinGame(Integer gameId, String color) throws Exception {
         //loop through the games and join the game on the number given
         int id = 1;
         List<GameData> games = server.listGames();
         for (GameData game : games) {
-            if (id == gameId.intValue()) {
-                server.joinGame(game.gameID(), color);
+            if (id == gameId) {
+                GameData chessGame = server.joinGame(game.gameID(), color);
                 System.out.println("Joined game " + game.gameName());
-                return;
+                return chessGame;
             }
             id += 1;
         }
+        return null;
     }
 
 
-    public void observeGame(String authToken, String gameId) {
+    public GameData observeGame(Integer gameId) throws Exception {
+        int id = 1;
+        List<GameData> games = server.listGames();
+        for (GameData game : games) {
+            if (id == gameId) {
+                GameData chessGame = server.observeGame(game.gameID());
+                System.out.println("Observing game " + game.gameName());
+                return chessGame;
+            }
+            id += 1;
+        }
+        return null;
     }
 
-    public String register(String username, String password, String email) {
+    public String register(String username, String password, String email) throws Exception {
         try {
             server.register(username, password, email);
-            System.out.println("Succesfully added! Welcome " + username);
-        } catch (Exception e){
-            System.out.println("Unsuccesfull in adding " + username + ". Error: " + e.getMessage());
+            return "Succesfully added! Welcome " + username;
+        } catch (Exception e) {
+            return "Unsuccesfull in adding " + username + ". Error: " + e.getMessage();
         }
-        return "Registered";
+    }
+
+    public String displayGame(GameData game) {
+        ChessGame chessGame = game.game();
+        System.out.println("White: " + game.whiteUsername() + "\nBlack: " + game.blackUsername() +"\n");
+        printBoard(generateBoard(chessGame, true));
+        System.out.println("\nOther Board");
+        printBoard(generateBoard(chessGame, false));
+        return "Chess Game";
+    }
+
+    private String[][] generateBoard(ChessGame chessGame, boolean whiteAtBottom) {
+        String[][] board = new String[8][8];
+
+        //need to display the pieces on the board
+
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                board[i][j] = EscapeSequences.EMPTY;
+            }
+        }
+
+        // Place pieces on the board based on the ChessGame object
+        ChessPiece[][] pieces = chessGame.getBoard().getSquares();
+        for (int i = 1; i <= 8; i++) {
+            for (int j = 1; j <= 8; j++) {
+                ChessPiece piece = pieces[i][j];
+                if (piece != null) {
+                    String symbol = getPieceSymbol(piece);
+                    if (whiteAtBottom) {
+                        board[8 - i][j - 1] = symbol; // White pieces at the bottom
+                    } else {
+                        board[i - 1][8 - j] = symbol; // Black pieces at the bottom
+                    }
+                }
+            }
+        }
+
+        return board;
+    }
+
+    private void printBoard(String[][] board) {
+        System.out.print(EscapeSequences.ERASE_SCREEN); // Clear the screen
+        System.out.print(EscapeSequences.moveCursorToLocation(1, 1)); // Move cursor to top-left corner
+
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                // Add color to pieces based on the background
+                String bgColor = ((i + j) % 2 == 0) ? EscapeSequences.SET_BG_COLOR_MAGENTA : EscapeSequences.SET_BG_COLOR_BLUE;
+                String coloredSquare = bgColor + board[i][j] + EscapeSequences.RESET_TEXT_COLOR + EscapeSequences.RESET_BG_COLOR;
+                System.out.print(coloredSquare);
+            }
+            System.out.println(); // Move to the next line after printing each row
+        }
+    }
+    private String getPieceSymbol(ChessPiece piece) {
+        String symbol = "";
+        if (piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
+            symbol = switch (piece.getPieceType()) {
+                case KING -> EscapeSequences.WHITE_KING;
+                case QUEEN -> EscapeSequences.WHITE_QUEEN;
+                case BISHOP -> EscapeSequences.WHITE_BISHOP;
+                case KNIGHT -> EscapeSequences.WHITE_KNIGHT;
+                case ROOK -> EscapeSequences.WHITE_ROOK;
+                case PAWN -> EscapeSequences.WHITE_PAWN;
+            };
+        } else {
+            symbol = switch (piece.getPieceType()) {
+                case KING -> EscapeSequences.BLACK_KING;
+                case QUEEN -> EscapeSequences.BLACK_QUEEN;
+                case BISHOP -> EscapeSequences.BLACK_BISHOP;
+                case KNIGHT -> EscapeSequences.BLACK_KNIGHT;
+                case ROOK -> EscapeSequences.BLACK_ROOK;
+                case PAWN -> EscapeSequences.BLACK_PAWN;
+            };
+        }
+        return symbol;
     }
 }

@@ -1,7 +1,8 @@
 package clientTests;
 
 import org.junit.jupiter.api.*;
-import server.Server;
+import server
+import client.*;
 
 public class ServerFacadeTests {
 
@@ -12,6 +13,7 @@ public class ServerFacadeTests {
         server = new Server();
         var port = server.run(0);
         System.out.println("Started test HTTP server on " + port);
+        facade = new ServerFacade(port);
     }
 
     @AfterAll
@@ -21,8 +23,9 @@ public class ServerFacadeTests {
 
 
     @Test
-    public void sampleTest() {
-        Assertions.assertTrue(true);
+    void register() throws Exception {
+        var authData = facade.register("player1", "password", "p1@email.com");
+        assertTrue(authData.authToken().length() > 10);
     }
 
 }

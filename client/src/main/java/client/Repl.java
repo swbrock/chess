@@ -21,11 +21,7 @@ public class Repl {
     public void run() {
         client.printSignedOutMenu();
         while (true) {
-//            if (state == State.SIGNEDOUT) {
-//                printSignedOutMenu();
-//            } else {
-//                printSignedInMenu();
-//            }
+            this.state = client.state;
             String input = scanner.nextLine();
             if (input.equals("exit")) {
                 break;
