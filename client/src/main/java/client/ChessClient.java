@@ -16,9 +16,11 @@ public class ChessClient {
     public final ServerFacade server;
     public State state;
 
-    public ChessClient(String serverURL, State state) {
-        this.serverUrl = serverURL;
-        this.server = new ServerFacade(serverURL);
+    public ChessClient(int urlPort, State state) {
+        String url = "http://localhost:";
+        url += String.valueOf(urlPort);
+        this.serverUrl = url;
+        this.server = new ServerFacade(urlPort);
         this.state = state;
     }
 

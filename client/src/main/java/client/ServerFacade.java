@@ -6,6 +6,7 @@ import client.response.GameResponse;
 import client.response.JoinGameResponse;
 import client.response.RegisterUserResponse;
 import com.google.gson.Gson;
+import model.AuthData;
 import model.GameData;
 import org.glassfish.grizzly.http.util.HttpUtils;
 
@@ -19,27 +20,30 @@ public class ServerFacade {
     private final String serverURL;
     public String authToken;
 
-    public ServerFacade(String serverURL) {
-        this.serverURL = serverURL;
+    public ServerFacade(int urlPort) {
+        String url = "http://localhost:";
+        url += String.valueOf(urlPort);
+        this.serverURL = url;
     }
 
-    public void register(String username, String password, String email) {
+    public RegisterUserResponse register(String username, String password, String email) throws Exception {
         var path = "/user";
-        UserData user = new UserData(username, password, email);
-        try {
-            makeRequest("POST", path, user, UserData.class);
-        } catch (Exception ex) {
-            System.out.println(ex.getMessage());
-        }
-
+        UserData createUser = new UserData(username, password, email);
+        makeRequest("POST", path, createUser, UserData.class);
+        var signInPath = "/session";
+        UserData user = new UserData(username, password, null);
+        RegisterUserResponse res = makeRequest("POST", signInPath, user, RegisterUserResponse.class);
+        this.authToken = res.getAuthToken();
+        return res;
     }
 
-    public void signIn(String username, String password) throws Exception {
+    public RegisterUserResponse signIn(String username, String password) throws Exception {
         var path = "/session";
         //get the user that matches the username and password
         UserData user = new UserData(username, password, null);
         RegisterUserResponse res = makeRequest("POST", path, user, RegisterUserResponse.class);
         this.authToken = res.getAuthToken();
+        return res;
     }
 
     public List<GameData> listGames() throws Exception {
@@ -67,6 +71,10 @@ public class ServerFacade {
         var path = "/game";
         GameResponse res = new GameResponse(gameId);
         return makeRequest("PUT", path, res, GameData.class);
+    }
+    public void clear () throws Exception {
+        var path = "/db";
+        makeRequest("DELETE", path, null, null);
     }
 
     private <T> T makeRequest(String method, String path, Object request, Class<T> responseClass) throws Exception {

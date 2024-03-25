@@ -13,8 +13,8 @@ public class Repl {
     private State state = State.SIGNEDOUT;
 
 
-    public Repl(String serverUrl) {
-        client = new ChessClient(serverUrl, state);
+    public Repl(int urlPort) {
+        client = new ChessClient(urlPort, state);
         scanner = new Scanner(System.in);
     }
 
