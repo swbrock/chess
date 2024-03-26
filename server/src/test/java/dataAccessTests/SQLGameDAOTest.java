@@ -6,13 +6,10 @@ import chess.ChessGame;
 import dataAccess.GameDAO;
 import dataAccess.SQLGameDAO;
 import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 
 import dataAccess.DataAccessException;
 import model.GameData;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 
 import java.util.List;
 
@@ -25,8 +22,8 @@ public class SQLGameDAOTest {
     public void setUp() throws Exception {
         gameDAO = new SQLGameDAO();
     }
-    @AfterEach
-    void tearDown() {
+    @After
+    public void tearDown() {
         // Clear the database after each test case
         try {
             gameDAO.clearGames();

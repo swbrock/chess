@@ -1,12 +1,11 @@
 package dataAccessTests;
 
 import dataAccess.SQLUserDAO;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
+
 
 import dataAccess.DataAccessException;
 import model.UserData;
-import org.junit.jupiter.api.AfterEach;
 import static org.junit.jupiter.api.Assertions.*;
 
 
@@ -18,9 +17,10 @@ public class SQLUserDAOTest {
     public void setUp() throws Exception {
         // Initialize the SQLUserDAO object before each test
         userDAO = new SQLUserDAO();
+        userDAO.clearUsers();
     }
 
-    @AfterEach
+    @After
     public void tearDown() throws Exception {
         // Clear the users after each test
         userDAO.clearUsers();
