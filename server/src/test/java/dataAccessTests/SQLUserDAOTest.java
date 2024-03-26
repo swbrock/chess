@@ -1,16 +1,14 @@
 package dataAccessTests;
 
 import dataAccess.SQLUserDAO;
-import dataAccess.UserDAO;
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import dataAccess.DataAccessException;
 import model.UserData;
 import org.junit.jupiter.api.AfterEach;
-
 import static org.junit.jupiter.api.Assertions.*;
+
 
 public class SQLUserDAOTest {
 

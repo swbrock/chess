@@ -1,7 +1,6 @@
 package dataAccessTests;
 
-import static org.junit.Assert.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 
 import chess.ChessGame;
 import dataAccess.GameDAO;
