@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import dataAccess.DataAccessException;
 import model.UserData;
+import org.junit.jupiter.api.AfterEach;
 
 public class SQLUserDAOTest {
 
@@ -21,7 +22,7 @@ public class SQLUserDAOTest {
         userDAO = new SQLUserDAO();
     }
 
-    @After
+    @AfterEach
     public void tearDown() throws Exception {
         // Clear the users after each test
         userDAO.clearUsers();

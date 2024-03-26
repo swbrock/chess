@@ -52,6 +52,8 @@ public class SQLGameDAO implements GameDAO {
                 if (resultSet.next()) {
                     return extractGameData(resultSet);
                 }
+            } catch (Exception e) {
+                throw new DataAccessException("Not able to get game");
             }
         } catch (SQLException ex) {
             throw new DataAccessException("Failed to get game");
