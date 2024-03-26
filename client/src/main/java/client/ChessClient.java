@@ -45,7 +45,6 @@ public class ChessClient {
         try {
             var tokens = input.toLowerCase().split(" ");
             var cmd = (tokens.length > 0) ? tokens[0] : "help";
-            var params = Arrays.copyOfRange(tokens, 1, tokens.length);
             return switch (cmd) {
                 case "1", "signin" -> {
                     System.out.println("Enter username:");
@@ -92,7 +91,6 @@ public class ChessClient {
         try {
             var tokens = input.toLowerCase().split(" ");
             var cmd = (tokens.length > 0) ? tokens[0] : "help";
-            var params = Arrays.copyOfRange(tokens, 1, tokens.length);
             return switch (cmd) {
                 case "signout", "5" -> {
                     signOut();
@@ -116,14 +114,18 @@ public class ChessClient {
                     System.out.println("Enter Color:");
                     var color = scanner.nextLine();
                     GameData game = joinGame(parseInt(id), color);
-                    yield displayGame(game);
+                    displayGame(game);
+                    System.out.print(EscapeSequences.SET_TEXT_COLOR_WHITE); // Clear the screen
+                    yield "Joined Game";
                 }
                 case "observegame", "4" -> {
                     System.out.println("Enter Game Number:");
                     Scanner scanner = new Scanner(System.in);
                     var id = scanner.nextLine();
                     GameData game = observeGame(parseInt(id));
-                    yield displayGame(game);
+                    displayGame(game);
+                    System.out.print(EscapeSequences.SET_TEXT_COLOR_WHITE); // Clear the screen
+                    yield "Observing Game";
                 }
                 case "help", "6" -> {
                     System.out.println("Help: ");
@@ -230,19 +232,21 @@ public class ChessClient {
     public String register(String username, String password, String email) throws Exception {
         try {
             server.register(username, password, email);
-            return "Succesfully added! Welcome " + username;
+            this.state = State.SIGNEDIN;
+            printSignedInMenu();
+            return "Succesfully added! Welcome " + username + "\n";
         } catch (Exception e) {
             return "Unsuccesfull in adding " + username + ". Error: " + e.getMessage();
         }
     }
 
-    public String displayGame(GameData game) {
+    public void displayGame(GameData game) {
         ChessGame chessGame = game.game();
         System.out.println("White: " + game.whiteUsername() + "\nBlack: " + game.blackUsername() +"\n");
         printBoard(generateBoard(chessGame, true));
         System.out.println("\nOther Board");
         printBoard(generateBoard(chessGame, false));
-        return "Chess Game";
+
     }
 
     private String[][] generateBoard(ChessGame chessGame, boolean whiteAtBottom) {
@@ -271,7 +275,6 @@ public class ChessClient {
                 }
             }
         }
-
         return board;
     }
 
