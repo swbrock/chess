@@ -145,6 +145,60 @@ public class ChessClient {
         }
     }
 
+    public String evalInGame(String input) {
+        try {
+            var tokens = input.toLowerCase().split(" ");
+            var cmd = (tokens.length > 0) ? tokens[0] : "help";
+            return switch (cmd) {
+                case "help" -> {
+                    System.out.println("Help: ");
+                    System.out.println("1. Redraw Chess Board: Redraws the chess board upon the user’s request.");
+                    System.out.println("2. Leave: Removes the user from the game (whether they are playing or observing the game). The client transitions back to the Post-Login UI.");
+                    System.out.println("3. Make Move: Allow the user to input what move they want to make. The board is updated to reflect the result of the move, and the board automatically updates on all clients involved in the game.");
+                    System.out.println("4. Resign: Prompts the user to confirm they want to resign. If they do, the user forfeits the game and the game is over. Does not cause the user to leave the game.");
+                    System.out.println("5. Highlight Legal Moves: Allows the user to input what piece for which they want to highlight legal moves. The selected piece’s current square and all squares it can legally move to are highlighted. This is a local operation and has no effect on remote users’ screens.");
+                    System.out.println("exit: Exit the program");
+                    yield "Help";
+                }
+                case "redrawchessboard", "1" -> {
+                    System.out.println("Redrawing Chess Board");
+                    yield "Redrawing Chess Board";
+                }
+                case "leave", "2" -> {
+                    System.out.println("Leaving Game");
+                    yield "Leaving Game";
+                }
+                case "makemove", "3" -> {
+                    System.out.println("Enter Move:");
+                    Scanner scanner = new Scanner(System.in);
+                    String move = scanner.nextLine();
+                    yield "Made Move: " + move;
+                }
+                case "resign", "4" -> {
+                    System.out.println("Are you sure you want to resign? (yes/no)");
+                    Scanner scanner = new Scanner(System.in);
+                    String resign = scanner.nextLine();
+                    if (resign.equals("yes")) {
+                        yield "Resigned";
+                    } else {
+                        yield "Did not resign";
+                    }
+                }
+                case "highlightlegalmoves", "5" -> {
+                    System.out.println("Enter Piece:");
+                    Scanner scanner = new Scanner(System.in);
+                    String piece = scanner.nextLine();
+                    yield "Highlighting Legal Moves for: " + piece;
+
+                }
+                default -> "Unknown command, type 'help' for options";
+            };
+        } catch (Exception e) {
+            return "Error: " + e.getMessage();
+        }
+    }
+
+
 
     public String signIn(String username, String password) {
         try {
@@ -207,6 +261,9 @@ public class ChessClient {
             if (id == gameId) {
                 GameData chessGame = server.joinGame(game.gameID(), color);
                 System.out.println("Joined game " + game.gameName());
+                //new websocketfacade
+
+                //joingame websocket
                 return chessGame;
             }
             id += 1;
