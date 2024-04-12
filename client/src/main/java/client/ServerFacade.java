@@ -37,13 +37,13 @@ public class ServerFacade {
         return res;
     }
 
-    public RegisterUserResponse signIn(String username, String password) throws Exception {
+    public String signIn(String username, String password) throws Exception {
         var path = "/session";
         //get the user that matches the username and password
         UserData user = new UserData(username, password, null);
         RegisterUserResponse res = makeRequest("POST", path, user, RegisterUserResponse.class);
         this.authToken = res.getAuthToken();
-        return res;
+        return authToken;
     }
 
     public List<GameData> listGames() throws Exception {

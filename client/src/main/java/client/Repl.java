@@ -30,12 +30,15 @@ public class Repl {
                 var message = client.evalSignedOut(input);
                 System.out.println(message);
                 this.state = State.SIGNEDIN;
-            } else {
-                if(client.server.authToken == null) {
-                    this.state = State.SIGNEDOUT;
-                }
+            } else if (state == State.SIGNEDIN) {
                 var message = client.evalSignedIn(input);
                 System.out.println(message);
+
+            } else if (state == State.INGAME) {
+                var message = client.evalInGame(input);
+                System.out.println(message);
+            } else {
+                System.out.println("Invalid state");
             }
         }
     }

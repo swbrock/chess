@@ -69,9 +69,8 @@ public class ServerFacadeTests {
             throw new DataAccessException("Failed to register");
         }
         try {
-            RegisterUserResponse signInResponse = facade.signIn("testUser", "password");
-            assertNotNull(signInResponse);
-            assertNotNull(signInResponse.getAuthToken());
+            String authToken = facade.signIn("testUser", "password");
+            assertNotNull(authToken);
         } catch (Exception e) {
             fail("Exception thrown: " + e.getMessage());
         }

@@ -41,6 +41,16 @@ public class ChessClient {
         System.out.println("exit");
     }
 
+    public void printInGameMenu() {
+        System.out.println("1. Redraw Chess Board");
+        System.out.println("2. Leave");
+        System.out.println("3. Make Move");
+        System.out.println("4. Resign");
+        System.out.println("5. Highlight Legal Moves");
+        System.out.println("6. Help");
+        System.out.println("exit");
+    }
+
     public String evalSignedOut(String input) {
         try {
             var tokens = input.toLowerCase().split(" ");
@@ -261,9 +271,10 @@ public class ChessClient {
             if (id == gameId) {
                 GameData chessGame = server.joinGame(game.gameID(), color);
                 System.out.println("Joined game " + game.gameName());
-                //new websocketfacade
-
+                this.state = State.INGAME;
+                WebSocketFacade ws = new WebSocketFacade(serverUrl);
                 //joingame websocket
+                ws.joinGame(server.authToken, game.gameID(), ChessGame.TeamColor.valueOf(color.toUpperCase()));
                 return chessGame;
             }
             id += 1;
@@ -279,6 +290,7 @@ public class ChessClient {
             if (id == gameId) {
                 GameData chessGame = server.observeGame(game.gameID());
                 System.out.println("Observing game " + game.gameName());
+                this.state = State.INGAME; //maybe make an observe game function
                 return chessGame;
             }
             id += 1;
@@ -372,4 +384,31 @@ public class ChessClient {
         }
         return symbol;
     }
+
+    // public static void main(String[] args) {
+    //     var port = 8080;
+    //     var state = State.SIGNEDOUT;
+    //     var client = new ChessClient(port, state);
+    //     client.printSignedOutMenu();
+    //     Scanner scanner = new Scanner(System.in);
+    //     while (true) {
+    //         String input = scanner.nextLine();
+    //         if (client.state == State.SIGNEDOUT) {
+    //             if (input.equals("exit")) {
+    //                 break;
+    //             }
+    //             System.out.println(client.evalSignedOut(input));
+    //         } else if (client.state == State.SIGNEDIN) {
+    //             if (input.equals("exit")) {
+    //                 break;
+    //             }
+    //             System.out.println(client.evalSignedIn(input));
+    //         } else if (client.state == State.INGAME) {
+    //             if (input.equals("exit")) {
+    //                 break;
+    //             }
+    //             System.out.println(client.evalInGame(input));
+    //         }
+    //     }
+    // }
 }

@@ -1,7 +1,8 @@
+
 package server.webSocket;
 
+import com.google.gson.Gson;
 import org.eclipse.jetty.websocket.api.Session;
-import server.webSocket.Connection;
 import webSocketMessages.serverMessages.ServerMessage;
 
 import java.io.IOException;
@@ -20,21 +21,48 @@ public class ConnectionManager {
         connections.remove(visitorName);
     }
 
-//    public void broadcast(String excludeVisitorName, ServerMessage.ServerMessageType.NOTIFICATION notification) throws IOException {
-//        var removeList = new ArrayList<Connection>();
-//        for (var c : connections.values()) {
-//            if (c.session.isOpen()) {
-//                if (!c.visitorName.equals(excludeVisitorName)) {
-//                    c.send(notification.toString());
-//                }
-//            } else {
-//                removeList.add(c);
-//            }
-//        }
-
-        // Clean up any connections that were left open.
-//        for (var c : removeList) {
-//            connections.remove(c.visitorName);
-//        }
+    public void sendMessage(String recipient, ServerMessage message) throws IOException {
+        for (var c : connections.values()) {
+            if (c.session.isOpen()) {
+                if (c.visitorName.equals(recipient)) {
+                    c.send(new Gson().toJson(message));
+                }
+            }
+        }
     }
-//}
+    public void broadcast(String excludeVisitorName, ServerMessage message) throws IOException {
+
+
+
+        var removeList = new ArrayList<Connection>();
+        if (message.getServerMessageType() == ServerMessage.ServerMessageType.LOAD_GAME){
+            for (var c : connections.values()) {
+                if (c.session.isOpen()) {
+                    if (!c.visitorName.equals(excludeVisitorName)) {
+
+                        c.send(new Gson().toJson(message));
+                    }
+                } else {
+                    removeList.add(c);
+                }
+            }
+        }
+        else {
+
+            for (var c : connections.values()) {
+                if (c.session.isOpen()) {
+                    if (!c.visitorName.equals(excludeVisitorName)) {
+                        c.send(new Gson().toJson(message));
+                    }
+                } else {
+                    removeList.add(c);
+                }
+            }
+            // Clean up any connections that were left open.
+            for (var c : removeList) {
+                connections.remove(c.visitorName);
+            }
+        }
+
+    }
+}

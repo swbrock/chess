@@ -9,15 +9,4 @@ public class LeaveGame extends UserGameCommand{
         this.gameID = gameID;
         this.commandType = CommandType.LEAVE;
     }
-
-    public int getGameID() {
-        return gameID;
-    }
-
-    @Override
-    public String toString() {
-        return "LeaveGame{" +
-                "gameID=" + gameID +
-                '}';
-    }
 }

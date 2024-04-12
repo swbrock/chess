@@ -19,7 +19,8 @@ public class UserGameCommand {
         JOIN_OBSERVER,
         MAKE_MOVE,
         LEAVE,
-        RESIGN
+        RESIGN,
+        REDRAW
     }
 
     protected CommandType commandType;
@@ -33,6 +34,7 @@ public class UserGameCommand {
     public CommandType getCommandType() {
         return this.commandType;
     }
+    public String getAuthToken() { return authToken; }
 
     @Override
     public boolean equals(Object o) {

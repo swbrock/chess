@@ -1,6 +1,13 @@
 package client;
 
+import chess.ChessGame;
 import com.google.gson.Gson;
+
+import webSocketMessages.userCommands.JoinPlayer;
+import webSocketMessages.userCommands.UserGameCommand;
+import webSocketMessages.userCommands.UserGameCommand.*;
+import webSocketMessages.serverMessages.ServerMessage;
+import webSocketMessages.serverMessages.ServerMessage.ServerMessageType.*;
 
 import javax.websocket.*;
 import java.io.IOException;
@@ -11,25 +18,65 @@ import java.net.URISyntaxException;
 public class WebSocketFacade extends Endpoint {
 
     Session session;
-    
-    public WebSocketFacade() {
+    NotificationHandler notificationHandler;
+
+
+    public WebSocketFacade(String url) throws Exception {
         try {
-            URI uri = new URI("ws://localhost:8080/chess");
+            url = url.replace("http", "ws");
+            URI socketURI = new URI(url + "/connect");
+
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
-            container.connectToServer(this, uri);
-        } catch (URISyntaxException | DeploymentException | IOException e) {
-            e.printStackTrace();
-}
+            this.session = container.connectToServer(this, socketURI);
+
+            //set message handler
+            this.session.addMessageHandler(new MessageHandler.Whole<String>() {
+                @Override
+                public void onMessage(String message) {
+                    Gson gson = new Gson();
+                    var serverMessage = gson.fromJson(message, ServerMessage.class);
+                    switch (serverMessage.getServerMessageType()) {
+                        case NOTIFICATION:
+                            notificationHandler.handleNotification(serverMessage);
+                            break;
+                        case ERROR:
+                            notificationHandler.handleError(serverMessage);
+                            break;
+                        default:
+                            break;
+                    }
+                }
+            });
+        } catch (DeploymentException | IOException | URISyntaxException ex) {
+            throw new Exception(ex.getMessage());
         }
+    }
+
 
     @Override
     public void onOpen(Session session, EndpointConfig config) {
         this.session = session;
     }
 
-    public void send(Object object) {
+    // @Override
+    // public void onMessage(Session session, String message) {
+    //     System.out.println("Received message: " + message);
+    // }
+    
+
+    @Override
+    public void onClose(Session session, CloseReason closeReason) {
+        notificationHandler.notify("Connection closed: " + closeReason.getReasonPhrase());
+    }
+
+    @Override
+    public void onError(Session session, Throwable thr) {
+        notificationHandler.notifyError(thr.getMessage());
+    }
+
+    public void sendCommand(UserGameCommand command) {
         Gson gson = new Gson();
-        String json = gson.toJson(object);
+        String json = gson.toJson(command);
         try {
             session.getBasicRemote().sendText(json);
         } catch (IOException e) {
@@ -42,18 +89,13 @@ public class WebSocketFacade extends Endpoint {
             session.close();
         } catch (IOException e) {
             e.printStackTrace();
+
         }
     }
 
-    // public void addMessageHandler(MessageHandler messageHandler) {
-    //     session.addMessageHandler(messageHandler);
-    // }
-
-    public interface MessageHandler {
-        void handleMessage(String message);
+    ///join game
+    public void joinGame(String authToken, int gameId, ChessGame.TeamColor color) {
+        JoinPlayer command = new JoinPlayer(authToken, gameId, color);
+        sendCommand(command);
     }
-
 }
-
-// Path: client/src/main/java/client/WebSocketFacade.java
-
