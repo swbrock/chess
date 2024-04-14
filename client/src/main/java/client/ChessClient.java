@@ -1,4 +1,5 @@
 package client;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
@@ -8,6 +9,7 @@ import static java.lang.Integer.parseInt;
 import chess.ChessGame;
 import chess.ChessPiece;
 import model.GameData;
+import ui.DrawBoard;
 import ui.EscapeSequences;
 
 public class ChessClient {
@@ -15,6 +17,13 @@ public class ChessClient {
     private final String serverUrl;
     public final ServerFacade server;
     public State state;
+    private List<GameData> gameDataList = new ArrayList<>();
+    private WebSocketFacade ws;
+    private DrawBoard draw;
+    private String username;
+    private int gameID;
+    private String authToken;
+    ChessGame.TeamColor playerColor;
 
     public ChessClient(int urlPort, State state) {
         String url = "http://localhost:";
@@ -60,6 +69,7 @@ public class ChessClient {
                     System.out.println("Enter username:");
                     Scanner scanner = new Scanner(System.in);
                     String username = scanner.nextLine();
+
                     System.out.println("Enter password:");
                     String password = scanner.nextLine();
                     yield signIn(username, password);
@@ -126,6 +136,7 @@ public class ChessClient {
                     GameData game = joinGame(parseInt(id), color);
                     displayGame(game);
                     System.out.print(EscapeSequences.SET_TEXT_COLOR_WHITE); // Clear the screen
+                    printInGameMenu();
                     yield "Joined Game";
                 }
                 case "observegame", "4" -> {
@@ -212,7 +223,7 @@ public class ChessClient {
 
     public String signIn(String username, String password) {
         try {
-            server.signIn(username, password);
+            this.authToken = server.signIn(username, password);
             this.state = State.SIGNEDIN;
             printSignedInMenu();
         } catch (Exception e) {
@@ -235,6 +246,7 @@ public class ChessClient {
         try {
             server.signOut();
             this.state = State.SIGNEDOUT;
+            
             printSignedOutMenu();
         } catch (Exception e) {
             System.out.println("Unsuccesfull in signing out. Error: " + e.getMessage());
@@ -271,10 +283,16 @@ public class ChessClient {
             if (id == gameId) {
                 GameData chessGame = server.joinGame(game.gameID(), color);
                 System.out.println("Joined game " + game.gameName());
-                this.state = State.INGAME;
-                WebSocketFacade ws = new WebSocketFacade(serverUrl);
+                ws = new WebSocketFacade(serverUrl);
                 //joingame websocket
-                ws.joinGame(server.authToken, game.gameID(), ChessGame.TeamColor.valueOf(color.toUpperCase()));
+                ChessGame.TeamColor teamColor;
+                if (color.toLowerCase() == "black") {
+                    teamColor = ChessGame.TeamColor.BLACK;
+                } else {
+                    teamColor = ChessGame.TeamColor.WHITE;
+                }
+                ws.joinGame(this.authToken, this.username, gameId, teamColor, chessGame);
+                this.state = State.INGAME;
                 return chessGame;
             }
             id += 1;
@@ -284,13 +302,17 @@ public class ChessClient {
 
 
     public GameData observeGame(Integer gameId) throws Exception {
+        //loop through the games and join the game on the number given
         int id = 1;
         List<GameData> games = server.listGames();
         for (GameData game : games) {
             if (id == gameId) {
                 GameData chessGame = server.observeGame(game.gameID());
                 System.out.println("Observing game " + game.gameName());
-                this.state = State.INGAME; //maybe make an observe game function
+                this.state = State.INGAME;
+                WebSocketFacade ws = new WebSocketFacade(serverUrl);
+                //observe game websocket
+                ws.joinObserver("username", gameId, chessGame);
                 return chessGame;
             }
             id += 1;

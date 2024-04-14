@@ -7,21 +7,24 @@ import dataAccess.GameDAO;
 import dataAccess.UserDAO;
 import model.AuthData;
 import service.GameService;
+import server.webSocket.WebSocketHandler;
 import spark.*;
 
 public class Server {
 
     private Handler handler;
+    private final WebSocketHandler webSocketHandler;
 
     public Server() {
         handler = new Handler();
+        webSocketHandler = new WebSocketHandler();
     }
 
     public int run(int desiredPort) {
         Spark.port(desiredPort);
 
         Spark.staticFiles.location("web");
-
+        Spark.webSocket("/connect", webSocketHandler);
         // Register your endpoints and handle exceptions here.
         Spark.delete("/db", (req, res) -> handler.clear(req, res));
         Spark.post("/game", (req, res) -> handler.createGame(req, res));
