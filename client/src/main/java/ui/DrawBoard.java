@@ -50,9 +50,11 @@ public class DrawBoard {
         out.print("\n");
         if (playerColor == ChessGame.TeamColor.BLACK){
             drawBoardBlack(out, gameData.game());
+            //generateBoard(gameData.game(), false, out);
         }
         else {
             drawBoardWhite(out, gameData.game());
+            //generateBoard(gameData.game(), true, out);
         }
 
     }
@@ -193,7 +195,7 @@ public class DrawBoard {
                 else {
                     if ((j % 2) != 0){
                         if ((i % 2) == 0){
-                            setYellow(out);
+                            setNeonYellow(out);
                         }
                         else {
                             setBrown(out);
@@ -205,7 +207,7 @@ public class DrawBoard {
                             setBrown(out);
                         }
                         else {
-                            setYellow(out);
+                            setNeonYellow(out);
                         }
                         evalBoard(out, game, 9-j, 9-i);
                     }
@@ -237,10 +239,10 @@ public class DrawBoard {
         if (board.getPiece(pos) != null){
             ChessPiece piece = board.getPiece(pos);
             if (piece.getTeamColor() == ChessGame.TeamColor.WHITE){
-                out.print(SET_TEXT_COLOR_WHITE);
+                out.print(SET_TEXT_COLOR_BLACK);
             }
             else {
-                out.print(SET_TEXT_COLOR_BLACK);
+                out.print(SET_TEXT_COLOR_WHITE);
             }
             out.print(" " + getPieceType(piece) + " ");
         }
@@ -272,12 +274,12 @@ public class DrawBoard {
     }
 
     private static void setBrown(PrintStream out) {
-        out.print(SET_BG_COLOR_BLACK);
+        out.print(SET_BG_COLOR_BLUE);
         out.print(SET_TEXT_COLOR_WHITE);
     }
 
     private static void setYellow(PrintStream out) {
-        out.print(SET_BG_COLOR_YELLOW);
+        out.print(SET_BG_COLOR_MAGENTA);
         out.print(SET_TEXT_COLOR_WHITE);
     }
 
@@ -292,7 +294,7 @@ public class DrawBoard {
     }
 
     private static void setNeonYellow(PrintStream out) {
-        out.print(SET_BG_COLOR_YELLOW);
+        out.print(SET_BG_COLOR_MAGENTA);
         out.print(SET_TEXT_COLOR_WHITE);
     }
 
@@ -303,5 +305,72 @@ public class DrawBoard {
 
 
 
+    private String[][] generateBoard(ChessGame chessGame, boolean whiteAtBottom, PrintStream out) {
+        String[][] board = new String[8][8];
+        writeLetters(out);
+
+        //need to display the pieces on the board
+
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                board[i][j] = EscapeSequences.EMPTY;
+            }
+        }
+
+        // Place pieces on the board based on the ChessGame object
+        ChessPiece[][] pieces = chessGame.getBoard().getSquares();
+        for (int i = 1; i <= 8; i++) {
+            for (int j = 1; j <= 8; j++) {
+                ChessPiece piece = pieces[i][j];
+                if (piece != null) {
+                    String symbol = getPieceSymbol(piece);
+                    if (whiteAtBottom) {
+                        board[8 - i][j - 1] = symbol; // White pieces at the bottom
+                    } else {
+                        board[i - 1][8 - j] = symbol; // Black pieces at the bottom
+                    }
+                }
+            }
+        }
+        return board;
+    }
+
+    private void printBoard(String[][] board) {
+        System.out.print(EscapeSequences.ERASE_SCREEN); // Clear the screen
+        System.out.print(EscapeSequences.moveCursorToLocation(1, 1)); // Move cursor to top-left corner
+
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                // Add color to pieces based on the background
+                String bgColor = ((i + j) % 2 == 0) ? EscapeSequences.SET_BG_COLOR_MAGENTA : EscapeSequences.SET_BG_COLOR_BLUE;
+                String coloredSquare = bgColor + board[i][j] + EscapeSequences.RESET_TEXT_COLOR + EscapeSequences.RESET_BG_COLOR;
+                System.out.print(coloredSquare);
+            }
+            System.out.println(); // Move to the next line after printing each row
+        }
+    }
+    private String getPieceSymbol(ChessPiece piece) {
+        String symbol = "";
+        if (piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
+            symbol = switch (piece.getPieceType()) {
+                case KING -> EscapeSequences.WHITE_KING;
+                case QUEEN -> EscapeSequences.WHITE_QUEEN;
+                case BISHOP -> EscapeSequences.WHITE_BISHOP;
+                case KNIGHT -> EscapeSequences.WHITE_KNIGHT;
+                case ROOK -> EscapeSequences.WHITE_ROOK;
+                case PAWN -> EscapeSequences.WHITE_PAWN;
+            };
+        } else {
+            symbol = switch (piece.getPieceType()) {
+                case KING -> EscapeSequences.BLACK_KING;
+                case QUEEN -> EscapeSequences.BLACK_QUEEN;
+                case BISHOP -> EscapeSequences.BLACK_BISHOP;
+                case KNIGHT -> EscapeSequences.BLACK_KNIGHT;
+                case ROOK -> EscapeSequences.BLACK_ROOK;
+                case PAWN -> EscapeSequences.BLACK_PAWN;
+            };
+        }
+        return symbol;
+    }
 
 }

@@ -1,13 +1,15 @@
 package client;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Scanner;
 
 import static java.lang.Integer.parseInt;
 
 import chess.ChessGame;
-import chess.ChessPiece;
+import chess.ChessMove;
+import chess.ChessPosition;
 import model.GameData;
 import ui.DrawBoard;
 import ui.EscapeSequences;
@@ -19,11 +21,10 @@ public class ChessClient {
     public State state;
     private List<GameData> gameDataList = new ArrayList<>();
     private WebSocketFacade ws;
-    private DrawBoard draw;
-    private String username;
     private int gameID;
     private String authToken;
     ChessGame.TeamColor playerColor;
+    private DrawBoard draw;
 
     public ChessClient(int urlPort, State state) {
         String url = "http://localhost:";
@@ -133,8 +134,8 @@ public class ChessClient {
                     var id = scanner.nextLine();
                     System.out.println("Enter Color:");
                     var color = scanner.nextLine();
-                    GameData game = joinGame(parseInt(id), color);
-                    displayGame(game);
+                    joinGame(parseInt(id), color);
+                    //displayGame(game);
                     System.out.print(EscapeSequences.SET_TEXT_COLOR_WHITE); // Clear the screen
                     printInGameMenu();
                     yield "Joined Game";
@@ -144,7 +145,6 @@ public class ChessClient {
                     Scanner scanner = new Scanner(System.in);
                     var id = scanner.nextLine();
                     GameData game = observeGame(parseInt(id));
-                    displayGame(game);
                     System.out.print(EscapeSequences.SET_TEXT_COLOR_WHITE); // Clear the screen
                     yield "Observing Game";
                 }
@@ -182,33 +182,37 @@ public class ChessClient {
                     yield "Help";
                 }
                 case "redrawchessboard", "1" -> {
-                    System.out.println("Redrawing Chess Board");
+                    redrawChessBoard();
                     yield "Redrawing Chess Board";
                 }
                 case "leave", "2" -> {
-                    System.out.println("Leaving Game");
+                    leaveGame();
                     yield "Leaving Game";
                 }
                 case "makemove", "3" -> {
-                    System.out.println("Enter Move:");
                     Scanner scanner = new Scanner(System.in);
-                    String move = scanner.nextLine();
-                    yield "Made Move: " + move;
+                    System.out.println("Enter Starting Position:");
+                    String start = scanner.nextLine();
+                    System.out.println("Enter End Position:");
+                    String end = scanner.nextLine();
+                    yield makeMove(start, end);
                 }
                 case "resign", "4" -> {
                     System.out.println("Are you sure you want to resign? (yes/no)");
                     Scanner scanner = new Scanner(System.in);
-                    String resign = scanner.nextLine();
-                    if (resign.equals("yes")) {
+                    String resignInput = scanner.nextLine();
+                    if (resignInput.equalsIgnoreCase("yes")) {
+                        resign();
                         yield "Resigned";
                     } else {
                         yield "Did not resign";
                     }
                 }
                 case "highlightlegalmoves", "5" -> {
-                    System.out.println("Enter Piece:");
+                    System.out.println("Enter Piece Position:");
                     Scanner scanner = new Scanner(System.in);
                     String piece = scanner.nextLine();
+                    highlightLegalMoves(piece);
                     yield "Highlighting Legal Moves for: " + piece;
 
                 }
@@ -225,6 +229,7 @@ public class ChessClient {
         try {
             this.authToken = server.signIn(username, password);
             this.state = State.SIGNEDIN;
+            this.gameDataList = server.listGames();
             printSignedInMenu();
         } catch (Exception e) {
             System.out.println("Unsuccesfull in signing in " + username + ". Error: " + e.getMessage());
@@ -259,6 +264,7 @@ public class ChessClient {
         //list games in ordered list with game name and usernames
         try {
             List<GameData> games = server.listGames();
+            this.gameDataList = games;
             var id = 1;
             System.out.println("Games");
             for (GameData game : games) {
@@ -275,29 +281,20 @@ public class ChessClient {
         server.createGame(gameName);
     }
 
-    public GameData joinGame(Integer gameId, String color) throws Exception {
-        //loop through the games and join the game on the number given
-        int id = 1;
-        List<GameData> games = server.listGames();
-        for (GameData game : games) {
-            if (id == gameId) {
-                GameData chessGame = server.joinGame(game.gameID(), color);
-                System.out.println("Joined game " + game.gameName());
-                ws = new WebSocketFacade(serverUrl);
-                //joingame websocket
-                ChessGame.TeamColor teamColor;
-                if (color.toLowerCase() == "black") {
-                    teamColor = ChessGame.TeamColor.BLACK;
-                } else {
-                    teamColor = ChessGame.TeamColor.WHITE;
-                }
-                ws.joinGame(this.authToken, this.username, gameId, teamColor, chessGame);
-                this.state = State.INGAME;
-                return chessGame;
+    public void joinGame(Integer gameIndex, String playerColor) throws Exception {
+            int id = 1;
+            if (id > gameDataList.size()){
+                throw new Exception("Game doesn't exist");
             }
-            id += 1;
-        }
-        return null;
+            this.gameID = gameDataList.get(gameIndex - 1).gameID();
+            playerColor = playerColor.toUpperCase();
+            ChessGame.TeamColor teamColor = convertColor(playerColor);
+            this.playerColor = teamColor;
+            server.joinGame(this.gameID, playerColor);
+
+            ws = new WebSocketFacade(serverUrl);
+            ws.joinGame(authToken, this.gameID, teamColor);
+            state = State.INGAME;
     }
 
 
@@ -311,8 +308,9 @@ public class ChessClient {
                 System.out.println("Observing game " + game.gameName());
                 this.state = State.INGAME;
                 WebSocketFacade ws = new WebSocketFacade(serverUrl);
+                this.gameID = id;
                 //observe game websocket
-                ws.joinObserver("username", gameId, chessGame);
+                ws.joinObserver(this.authToken, this.gameID);
                 return chessGame;
             }
             id += 1;
@@ -331,106 +329,145 @@ public class ChessClient {
         }
     }
 
-    public void displayGame(GameData game) {
-        ChessGame chessGame = game.game();
-        System.out.println("White: " + game.whiteUsername() + "\nBlack: " + game.blackUsername() +"\n");
-        printBoard(generateBoard(chessGame, true));
-        System.out.println("\nOther Board");
-        printBoard(generateBoard(chessGame, false));
-
+    public void redrawChessBoard() throws Exception {
+        ws.redrawBoard(this.authToken, this.gameID);
     }
 
-    private String[][] generateBoard(ChessGame chessGame, boolean whiteAtBottom) {
-        String[][] board = new String[8][8];
+    public void leaveGame() throws Exception {
+        state = State.SIGNEDIN;
+        ws = new WebSocketFacade(serverUrl);
+        ws.leave(authToken, gameID);
+        this.playerColor = null;
+        this.gameID = 0;
+    }
 
-        //need to display the pieces on the board
+    public String makeMove(String start, String end) throws Exception {
+        System.out.print("Making Move");
+            String startPosString = start;
+            char columnChar = startPosString.charAt(0);
+            String rowChar = String.valueOf(startPosString.charAt(1));
+            int startRow = Integer.parseInt(rowChar);
+            int startCol = letterToNumber(columnChar);
+            ChessPosition startPos = new ChessPosition(startRow, startCol);
 
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                board[i][j] = EscapeSequences.EMPTY;
+            String endPosString = end;
+            columnChar = endPosString.charAt(0);
+            rowChar = String.valueOf(endPosString.charAt(1));
+            int endRow = Integer.parseInt(rowChar);
+            int endCol = letterToNumber(columnChar);
+            ChessPosition endPos = new ChessPosition(endRow, endCol);
+            ChessMove move = new ChessMove(startPos, endPos, null);
+            ws.makeMove(this.authToken, move, this.gameID);
+        return "";
+    }
+
+    public int letterToNumber(char letter) throws Exception {
+        if (letter == 'A' || letter == 'a'){
+            return 1;
+        }
+        else if (letter == 'B' || letter == 'b'){
+            return 2;
+        }
+        else if (letter == 'C' || letter == 'c'){
+            return 3;
+        }
+        else if (letter == 'D' || letter == 'd'){
+            return 4;
+        }
+        else if (letter == 'E' || letter == 'e'){
+            return 5;
+        }
+        else if (letter == 'F' || letter == 'f'){
+            return 6;
+        }
+        else if (letter == 'G' || letter == 'g'){
+            return 7;
+        }
+        else if (letter == 'H' || letter == 'h'){
+            return 8;
+        }
+        else {
+            throw new Exception("Error: expected makemove <(A-H)(1-8)> <(A-H)(1-8)>");
+        }
+    }
+
+    public void resign() throws IOException {
+        ws.resign(authToken, gameID);
+    }
+
+    public void highlightLegalMoves(String piece) throws Exception {
+        System.out.print("\nHighlighting legal moves");
+        String posString = piece;
+        char columnChar = posString.charAt(0);
+        String rowChar = String.valueOf(posString.charAt(1));
+        int row = Integer.parseInt(rowChar);
+        int col = letterToNumber(columnChar);
+        ChessPosition pos = new ChessPosition(row,col);
+        updateGame();
+        GameData gameData = null;
+        for (int i = 0; i < gameDataList.size(); i++){
+            if(gameDataList.get(i).gameID() == gameID) {
+                gameData = gameDataList.get(i);
             }
         }
+        draw = new DrawBoard();
+        draw.displayGame(gameData, playerColor, pos);
+    }
 
-        // Place pieces on the board based on the ChessGame object
-        ChessPiece[][] pieces = chessGame.getBoard().getSquares();
-        for (int i = 1; i <= 8; i++) {
-            for (int j = 1; j <= 8; j++) {
-                ChessPiece piece = pieces[i][j];
-                if (piece != null) {
-                    String symbol = getPieceSymbol(piece);
-                    if (whiteAtBottom) {
-                        board[8 - i][j - 1] = symbol; // White pieces at the bottom
-                    } else {
-                        board[i - 1][8 - j] = symbol; // Black pieces at the bottom
-                    }
-                }
+    private void updateGameList(Collection<GameData> gameList) throws Exception {
+        gameDataList.clear();
+        for (GameData gameData : gameList) {
+            this.gameDataList.add(gameData);
+        }
+    }
+
+
+    private void updateGame() throws Exception {
+        this.gameDataList.clear();
+        Collection<GameData> newGameList = server.listGames();
+        for (GameData game: newGameList) {
+            gameDataList.add(game);
+        }
+
+    }
+
+    private void displayGameList(){
+        System.out.print(EscapeSequences.SET_TEXT_COLOR_BLUE);
+        System.out.print("Listing Games: \n");
+        for (int i = 1; i < gameDataList.size()+1; i++){
+            GameData gameData = gameDataList.get(i-1);
+            System.out.print(EscapeSequences.SET_TEXT_COLOR_GREEN);
+            System.out.print(EscapeSequences.SET_TEXT_BOLD);
+            System.out.print("  Game: " + i + "\n");
+            System.out.print(EscapeSequences.RESET_TEXT_BOLD_FAINT);
+            System.out.print(EscapeSequences.SET_TEXT_COLOR_WHITE);
+            System.out.print("      Game Name: " +  gameData.gameName() + "\n");
+            String wUsername = gameData.whiteUsername();
+            String bUsername = gameData.blackUsername();
+            if (wUsername == null){
+                wUsername = "No player added";
             }
-        }
-        return board;
-    }
-
-    private void printBoard(String[][] board) {
-        System.out.print(EscapeSequences.ERASE_SCREEN); // Clear the screen
-        System.out.print(EscapeSequences.moveCursorToLocation(1, 1)); // Move cursor to top-left corner
-
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                // Add color to pieces based on the background
-                String bgColor = ((i + j) % 2 == 0) ? EscapeSequences.SET_BG_COLOR_MAGENTA : EscapeSequences.SET_BG_COLOR_BLUE;
-                String coloredSquare = bgColor + board[i][j] + EscapeSequences.RESET_TEXT_COLOR + EscapeSequences.RESET_BG_COLOR;
-                System.out.print(coloredSquare);
+            if (bUsername == null){
+                bUsername = "No player added";
             }
-            System.out.println(); // Move to the next line after printing each row
+            System.out.print("      White Player: " +  wUsername + "\n");
+            System.out.print("      Black Player: " +  bUsername + "\n");
         }
-    }
-    private String getPieceSymbol(ChessPiece piece) {
-        String symbol = "";
-        if (piece.getTeamColor() == ChessGame.TeamColor.WHITE) {
-            symbol = switch (piece.getPieceType()) {
-                case KING -> EscapeSequences.WHITE_KING;
-                case QUEEN -> EscapeSequences.WHITE_QUEEN;
-                case BISHOP -> EscapeSequences.WHITE_BISHOP;
-                case KNIGHT -> EscapeSequences.WHITE_KNIGHT;
-                case ROOK -> EscapeSequences.WHITE_ROOK;
-                case PAWN -> EscapeSequences.WHITE_PAWN;
-            };
-        } else {
-            symbol = switch (piece.getPieceType()) {
-                case KING -> EscapeSequences.BLACK_KING;
-                case QUEEN -> EscapeSequences.BLACK_QUEEN;
-                case BISHOP -> EscapeSequences.BLACK_BISHOP;
-                case KNIGHT -> EscapeSequences.BLACK_KNIGHT;
-                case ROOK -> EscapeSequences.BLACK_ROOK;
-                case PAWN -> EscapeSequences.BLACK_PAWN;
-            };
-        }
-        return symbol;
     }
 
-    // public static void main(String[] args) {
-    //     var port = 8080;
-    //     var state = State.SIGNEDOUT;
-    //     var client = new ChessClient(port, state);
-    //     client.printSignedOutMenu();
-    //     Scanner scanner = new Scanner(System.in);
-    //     while (true) {
-    //         String input = scanner.nextLine();
-    //         if (client.state == State.SIGNEDOUT) {
-    //             if (input.equals("exit")) {
-    //                 break;
-    //             }
-    //             System.out.println(client.evalSignedOut(input));
-    //         } else if (client.state == State.SIGNEDIN) {
-    //             if (input.equals("exit")) {
-    //                 break;
-    //             }
-    //             System.out.println(client.evalSignedIn(input));
-    //         } else if (client.state == State.INGAME) {
-    //             if (input.equals("exit")) {
-    //                 break;
-    //             }
-    //             System.out.println(client.evalInGame(input));
-    //         }
-    //     }
-    // }
+
+    private ChessGame.TeamColor convertColor(String color) throws Exception{
+        if (color == null || color == "" || color == "blank"){
+            throw new Exception("HTTP Request needs to be made first");
+        }
+        else if (color.equals("WHITE")){
+            return ChessGame.TeamColor.WHITE;
+        }
+        else if (color.equals("BLACK")) {
+            return ChessGame.TeamColor.BLACK;
+        }
+        else {
+            throw new Exception("Invalid Team Color");
+        }
+    }
 }

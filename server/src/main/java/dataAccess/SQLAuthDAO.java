@@ -64,6 +64,22 @@ public class SQLAuthDAO implements AuthDAO {
         }
     }
 
+    public AuthData getAuthData(String authToken) throws DataAccessException {
+        try (Connection connection = DatabaseManager.getConnection();
+             PreparedStatement statement = connection.prepareStatement(SELECT_AUTH_SQL)) {
+            statement.setString(1, authToken);
+            try (ResultSet resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    String username = resultSet.getString(1);
+                    return new AuthData(authToken, username);
+                }
+            }
+        } catch (SQLException ex) {
+            throw new DataAccessException("Failed to get auth data");
+        }
+        return null;
+    }
+
     @Override
     public void deleteAuth(String authToken) throws DataAccessException {
         try (Connection connection = DatabaseManager.getConnection();

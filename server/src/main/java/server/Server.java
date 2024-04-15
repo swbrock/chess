@@ -15,7 +15,7 @@ public class Server {
     private Handler handler;
     private final WebSocketHandler webSocketHandler;
 
-    public Server() {
+    public Server() throws DataAccessException {
         handler = new Handler();
         webSocketHandler = new WebSocketHandler();
     }

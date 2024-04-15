@@ -2,13 +2,13 @@ package client;
 
 import chess.ChessGame;
 
-import chess.ChessPiece;
+import chess.ChessMove;
 import chess.ChessPosition;
-import client.ChessClient;
 import com.google.gson.Gson;
 import model.GameData;
 import ui.DrawBoard;
 import webSocketMessages.serverMessages.LoadGame;
+import webSocketMessages.serverMessages.NotificationMessage;
 import webSocketMessages.serverMessages.ServerMessage;
 import webSocketMessages.userCommands.*;
 
@@ -37,8 +37,8 @@ public class WebSocketFacade extends Endpoint {
                 @Override
                 public void notify(ServerMessage serverMessage, String message) {
                     switch (serverMessage.getServerMessageType()) {
-                        case NOTIFICATION -> System.out.println("Notification: " + serverMessage.getMessage());
-                        case ERROR -> System.out.println("Error");
+                        case NOTIFICATION -> notification(message);
+                        case ERROR -> error(message);
                         case LOAD_GAME -> loadGame(message);
                     }
                 }
@@ -47,64 +47,74 @@ public class WebSocketFacade extends Endpoint {
             WebSocketContainer container = ContainerProvider.getWebSocketContainer();
             this.session = container.connectToServer(this, socketURI);
 
-            //set message handler
+
             this.session.addMessageHandler(new MessageHandler.Whole<String>() {
                 @Override
                 public void onMessage(String message) {
                     ServerMessage notification = new Gson().fromJson(message, ServerMessage.class);
-                    System.out.print("\nClient.WebSocketFacade.onMessage called. \nMessageType: " + notification.getServerMessageType().toString() + "\nMessage: " + notification.getMessage() + "\n");
                     notificationHandler.notify(notification, message);
                 }
             });
         } catch (DeploymentException | IOException | URISyntaxException ex) {
-            throw new Exception(ex.getMessage());
+
         }
     }
+
+
 
     //Endpoint requires this method, but you don't have to do anything
     @Override
     public void onOpen(Session session, EndpointConfig endpointConfig) {
     }
 
-    public void joinGame(String authToken, String username, int gameID, ChessGame.TeamColor color, GameData gameData) throws Exception {
+    public void error(String message) {
+        Error error  = new Gson().fromJson(message, Error.class);
+        System.out.print(error.getMessage());
+    }
+
+    public void notification(String message) {
+        NotificationMessage notification  = new Gson().fromJson(message, NotificationMessage.class);
+        System.out.print(notification.getMessage());
+    }
+
+
+    public void joinGame(String authToken, int gameID, ChessGame.TeamColor color) throws Exception {
         try {
-            System.out.print("\nClient.WebSocketFacade.joinGame called \n");
+            System.out.print("\nClient.WebSocketFacade.joinGame \n");
             playerColor = color;
-            var action = new JoinPlayer(authToken, username, gameID, color, gameData);
+            var action = new JoinPlayer(authToken, gameID, color);
             this.session.getBasicRemote().sendText(new Gson().toJson(action));
-        } catch (Exception ex) {
-            throw new Exception(ex.getMessage());
+        } catch (IOException ex) {
+            System.out.print("Here");
         }
     }
 
-    public void joinObserver(String username, int gameID, GameData game) throws Exception {
+    public void joinObserver(String authToken, int gameID) throws Exception {
         try {
-            var action = new JoinObserver(username, gameID, game);
+            var action = new JoinObserver(authToken, gameID);
             this.session.getBasicRemote().sendText(new Gson().toJson(action));
-        } catch (Exception ex) {
-            throw new Exception(ex.getMessage());
+        } catch (IOException ex) {
         }
     }
 
 
     public void loadGame(String message) {
         System.out.print("WSF: Load Game Called");
-        LoadGame loadGame = new Gson().fromJson(message, LoadGame.class);
-        GameData game = loadGame.getGameData();
+        LoadGame loadGame  = new Gson().fromJson(message, LoadGame.class);
+        GameData game = loadGame.getGame();
         String bUsername = game.blackUsername();
         String wUsername = game.whiteUsername();
-
-        ChessGame.TeamColor color = loadGame.getTeamColor();
 
         draw.displayGame(game, playerColor, null);
     }
 
-    public void leave(String username) throws Exception {
+
+    public void leave(String authToken, int gameID) {
         try {
-            var action = new LeaveGame(username);
+            var action = new LeaveGame(authToken, gameID);
             this.session.getBasicRemote().sendText(new Gson().toJson(action));
-        } catch (Exception e) {
-            throw new Exception(e.getMessage());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
@@ -113,13 +123,21 @@ public class WebSocketFacade extends Endpoint {
         try {
             var action = new RedrawBoard(authToken, gameID);
             this.session.getBasicRemote().sendText(new Gson().toJson(action));
-        } catch (Exception e) {
-            throw new Exception(e.getMessage());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public void makeMove(String authToken, ChessPosition startPos, ChessPosition endPos, int gameID, ChessGame.TeamColor color) throws IOException {
-        var action = new MakeMove(authToken, startPos, endPos, gameID, color);
+    public void makeMove(String authToken, ChessMove move, int gameID) throws IOException {
+        var action = new MakeMove(authToken, move, gameID);
         this.session.getBasicRemote().sendText(new Gson().toJson(action));
     }
+
+    public void resign(String authToken, int gameID) throws IOException {
+        var action = new Resign(authToken, gameID);
+        this.session.getBasicRemote().sendText(new Gson().toJson(action));
+    }
+
+
+
 }

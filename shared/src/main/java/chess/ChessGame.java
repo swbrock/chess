@@ -11,6 +11,7 @@ import chess.ChessPiece.PieceType;
  * signature of the existing methods.
  */
 public class ChessGame {
+    public boolean isGameOver;
     private ChessBoard board;
     private TeamColor teamTurn;
 
@@ -287,4 +288,14 @@ public class ChessGame {
     public ChessBoard getBoard() {
         return this.board;
     }
+
+    //check to see if game is over
+    public boolean isGameOver() {
+        if (isInCheckmate(TeamColor.WHITE) || isInCheckmate(TeamColor.BLACK) || isInStalemate(TeamColor.WHITE)
+                || isInStalemate(TeamColor.BLACK)) {
+            isGameOver = true;
+        }
+        return isGameOver;
+    }
+
 }

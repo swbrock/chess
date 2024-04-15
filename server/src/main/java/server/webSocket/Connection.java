@@ -12,8 +12,4 @@ public class Connection {
         this.visitorName = visitorName;
         this.session = session;
     }
-
-    public void send(String msg) throws IOException {
-        session.getRemote().sendString(msg);
-    }
 }
