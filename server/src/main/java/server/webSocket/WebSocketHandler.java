@@ -18,6 +18,7 @@ import org.eclipse.jetty.websocket.api.annotations.WebSocket;
 import webSocketMessages.serverMessages.LoadGame;
 import webSocketMessages.serverMessages.NotificationMessage;
 import webSocketMessages.serverMessages.ServerMessage;
+import webSocketMessages.serverMessages.ErrorMessage;
 import webSocketMessages.userCommands.*;
 
 import java.io.IOException;
@@ -67,7 +68,7 @@ public class WebSocketHandler {
             AuthData auth = authDAO.getAuthData(authToken);
             String userName = auth.username();
             if (!Objects.equals(userName, game.whiteUsername()) && !Objects.equals(userName, game.blackUsername())){
-                Error error = new Error("Need to call http first");
+                ErrorMessage error = new ErrorMessage("Error: Already taken");
                 connections.sendMessage(gameID, authToken, new Gson().toJson(error));
                 return;
             }
@@ -75,21 +76,21 @@ public class WebSocketHandler {
 
 
             if (color != ChessGame.TeamColor.WHITE && color != ChessGame.TeamColor.BLACK) {
-                Error error = new Error("No color");
+                ErrorMessage error = new ErrorMessage("Error: No color");
                 connections.sendMessage(gameID, authToken, new Gson().toJson(error));
                 return;
             }
 
 
             if (game.whiteUsername() != null && color == ChessGame.TeamColor.WHITE && !(userName.equals(game.whiteUsername()))){
-                Error error = new Error("Spot already taken");
+                ErrorMessage error = new ErrorMessage("Error: Spot already taken");
                 String message = new Gson().toJson(error);
                 connections.sendMessage(gameID, authToken, message);
                 return;
             }
             else if (game.blackUsername()!= null && color == ChessGame.TeamColor.BLACK && !(userName.equals(game.blackUsername()))){
 
-                Error error = new Error("Spot already taken");
+                ErrorMessage error = new ErrorMessage("Error: Spot already taken");
                 connections.sendMessage(gameID, authToken, new Gson().toJson(error));
                 return;
             }
@@ -103,7 +104,7 @@ public class WebSocketHandler {
             var loadGame = new LoadGame(game);
             connections.sendMessage(gameID, authToken, new Gson().toJson(loadGame));
         } catch (Exception e) {
-            Error error = new Error("Error");
+            ErrorMessage error = new ErrorMessage("Error: Bad connection");
             connections.sendMessage(gameID, authToken, new Gson().toJson(error));
         }
 
@@ -128,7 +129,7 @@ public class WebSocketHandler {
             var loadGame = new LoadGame(gameData);
             connections.sendMessage(gameID, authToken, new Gson().toJson(loadGame));
         } catch (Exception ex) {
-            Error error = new Error(ex.getMessage());
+            ErrorMessage error = new ErrorMessage("Error: Failed to join");
             System.out.println(ex.getMessage());
             String message = new Gson().toJson(error);
             connections.sendMessage(gameID, authToken, message);
@@ -177,14 +178,14 @@ public class WebSocketHandler {
                 color = ChessGame.TeamColor.WHITE;
             }
             else {
-                Error error = new Error("Error: Not one of the teams");
+                ErrorMessage error = new ErrorMessage("Error: Not one of the teams");
                 String message = new Gson().toJson(error);
                 connections.sendMessage(gameID, authToken, message);
                 return;
             }
 
             if (color != game.game().getTeamTurn()) {
-                Error error = new Error("Error: Not one of the teams");
+                ErrorMessage error = new ErrorMessage("Error: Not one of the teams");
                 String message = new Gson().toJson(error);
                 connections.sendMessage(gameID, authToken, message);
                 return;
@@ -197,7 +198,7 @@ public class WebSocketHandler {
             NotificationMessage serverMessage = new NotificationMessage(message);
             connections.broadcast(authToken, serverMessage, gameID);
         } catch (Exception ex) {
-            Error error = new Error(ex.getMessage());
+            ErrorMessage error = new ErrorMessage("Error: Can't make move");
             System.out.println(ex.getMessage());
             String message = new Gson().toJson(error);
             connections.sendMessage(gameID, authToken, message);
@@ -230,7 +231,7 @@ public class WebSocketHandler {
             connections.broadcast("", notification, gameID);
 
         } catch (Exception ex) {
-            Error error = new Error(ex.getMessage());
+            ErrorMessage error = new ErrorMessage("Error: failed to resign");
             System.out.println(ex.getMessage());
             String message = new Gson().toJson(error);
             connections.sendMessage(gameID, authToken, message);

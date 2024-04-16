@@ -19,6 +19,8 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 
+import webSocketMessages.serverMessages.ErrorMessage;
+
 //need to extend Endpoint for websocket to work properly
 public class WebSocketFacade extends Endpoint {
 
@@ -114,7 +116,7 @@ public class WebSocketFacade extends Endpoint {
             var action = new LeaveGame(authToken, gameID);
             this.session.getBasicRemote().sendText(new Gson().toJson(action));
         } catch (IOException e) {
-            throw new RuntimeException(e);
+
         }
     }
 
@@ -124,7 +126,6 @@ public class WebSocketFacade extends Endpoint {
             var action = new RedrawBoard(authToken, gameID);
             this.session.getBasicRemote().sendText(new Gson().toJson(action));
         } catch (IOException e) {
-            throw new RuntimeException(e);
         }
     }
 

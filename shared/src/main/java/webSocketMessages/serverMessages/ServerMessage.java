@@ -22,8 +22,7 @@ public class ServerMessage {
         this.serverMessageType = type;
     }
 
-    public ServerMessage(ServerMessageType type, String message) {
-        this.serverMessageType = type;
+    public ServerMessage(String message) {
         this.message = message;
     }
 
